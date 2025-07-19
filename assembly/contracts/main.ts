@@ -1,15 +1,18 @@
-// Step1 DeFi System - Main deployment contract
+// Step1 DeFi System - Enhanced Main Deployment Contract
 import { Context, generateEvent, Storage } from '@massalabs/massa-as-sdk';
 import { Args, stringToBytes } from '@massalabs/as-types';
 
-// Re-export main controller functions for deployment
+// Re-export enhanced main controller functions
 export {
   constructor as mainControllerConstructor,
   autonomousCycle,
   getSystemStatus,
   getLastDecision,
-  forceUpdate
-} from './MainController';
+  forceUpdate,
+  getErrorHistory,
+  clearErrorHistory,
+  setLogLevel
+} from './core/SimpleEnhancedController';
 
 // Re-export observation thread functions
 export {
@@ -21,19 +24,24 @@ export {
   simulateMarketData
 } from './ObservationThread';
 
+// Enhanced features integrated in main controller
+
 const PROJECT_NAME_KEY = 'project_name';
 const VERSION_KEY = 'version';
 
 /**
- * Default constructor for Step1 project
+ * Enhanced constructor for Step1 project with logging
  */
 export function constructor(binaryArgs: StaticArray<u8>): void {
-  assert(Context.isDeployingContract());
+  assert(Context.isDeployingContract(), 'Constructor can only be called during deployment');
   
-  Storage.set(PROJECT_NAME_KEY, 'Step1 DeFi System');
-  Storage.set(VERSION_KEY, '1.0.0');
+  // Set project metadata
+  Storage.set(PROJECT_NAME_KEY, 'Step1 DeFi System - Enhanced');
+  Storage.set(VERSION_KEY, '2.0.0');
   
-  generateEvent('Step1 DeFi System deployed successfully');
+  generateEvent('[INFO] [Step1Main] Project deployment initiated | Data: version=2.0.0');
+  generateEvent('🚀 Step1 DeFi System (Enhanced) deployed successfully - Ready for autonomous operation');
+  generateEvent('[INFO] [Step1Main] Enhanced features enabled | Data: logging=true, validation=true, errorHandling=true');
 }
 
 /**
