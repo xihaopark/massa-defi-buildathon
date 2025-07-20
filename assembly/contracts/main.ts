@@ -24,6 +24,9 @@ export {
   simulateMarketData
 } from './ObservationThread';
 
+// Import ASC functions
+import { AutonomousScheduler } from './autonomous/AutonomousScheduler';
+
 // Enhanced features integrated in main controller
 
 const PROJECT_NAME_KEY = 'project_name';
@@ -62,4 +65,43 @@ export function healthCheck(_: StaticArray<u8>): StaticArray<u8> {
   const message = `Step1 System is operational at timestamp ${Context.timestamp()}`;
   generateEvent(message);
   return stringToBytes(message);
+}
+
+/**
+ * Initialize ASC (Autonomous Smart Contract) execution
+ */
+export function initializeASC(_: StaticArray<u8>): void {
+  AutonomousScheduler.initializeAutonomousExecution();
+  generateEvent('🚀 ASC initialization completed');
+}
+
+/**
+ * ASC autonomous execution entry point
+ */
+export function autonomousExecute(args: StaticArray<u8>): void {
+  AutonomousScheduler.autonomousExecute(args);
+}
+
+/**
+ * Emergency stop ASC execution
+ */
+export function emergencyStopASC(_: StaticArray<u8>): void {
+  AutonomousScheduler.emergencyStop();
+}
+
+/**
+ * Resume ASC execution
+ */
+export function resumeASC(_: StaticArray<u8>): void {
+  AutonomousScheduler.resumeExecution();
+}
+
+/**
+ * Get ASC execution statistics
+ */
+export function getASCStats(_: StaticArray<u8>): StaticArray<u8> {
+  const stats = AutonomousScheduler.getExecutionStats();
+  const statsStr = `executions=${stats.totalExecutions}, success=${stats.successfulExecutions}, failed=${stats.failedExecutions}, lastSlot=${stats.lastExecutionSlot}`;
+  generateEvent(`ASC Stats: ${statsStr}`);
+  return stringToBytes(statsStr);
 }

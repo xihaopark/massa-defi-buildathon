@@ -58,7 +58,7 @@ async function main() {
     for (let i = 0; i < 3; i++) {
       const threadArgs = new Args()
         .addU8(i)           // Thread ID
-        .addI64(1000 * (i + 1)); // Initial value
+        .addI64(BigInt(1000 * (i + 1))); // Initial value
       
       const thread = await deployContract('ObservationThread', threadArgs, i);
       observationThreads.push(thread);

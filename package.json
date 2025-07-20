@@ -1,7 +1,7 @@
 {
-    "name": "my-massa-sc",
-    "version": "0.0.2",
-    "description": "",
+    "name": "step1-defi-system",
+    "version": "1.0.0",
+    "description": "Autonomous DeFi trading system with rule-based market detection for Massa blockchain",
     "main": "index.js",
     "scripts": {
         "test": "asp --summary",
@@ -16,9 +16,9 @@
         "fmt:check": "npm run prettier && npm run lint",
         "fmt": "npm run prettier:fix && npm run lint:fix"
     },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
+    "keywords": ["massa", "defi", "autonomous", "trading", "blockchain", "asc", "smart-contracts"],
+    "author": "xihaopark",
+    "license": "MIT",
     "devDependencies": {
         "@as-pect/cli": "^8.1.0",
         "@assemblyscript/loader": "^0.27.29",

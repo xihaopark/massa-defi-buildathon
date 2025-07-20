@@ -3,13 +3,12 @@ import {
   JsonRpcProvider, 
   SmartContract, 
   Args,
-  DefaultProviderUrls,
   Account
 } from '@massalabs/massa-web3';
 import type { SystemData, SystemStatus, Decision, AttentionWeight, ThreadObservation } from '../types';
 
 // Configuration
-const BUILDNET_URL = DefaultProviderUrls.BUILDNET;
+const BUILDNET_URL = 'https://buildnet.massa.net/api/v2';
 let provider: JsonRpcProvider;
 let mainControllerContract: SmartContract;
 let observationThreadContracts: SmartContract[] = [];
