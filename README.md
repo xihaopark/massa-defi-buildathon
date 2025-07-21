@@ -91,7 +91,7 @@ Create a `.env` file in the root directory:
 
 ```env
 # Massa Testnet Configuration
-MASSA_PRIVATE_KEY=S1267XN94bHcUxCHUeJz8KTXQXXrt76gRLZYJkgckek6wz2hnyDF
+MASSA_PRIVATE_KEY=""
 MASSA_RPC_URL=https://test.massa.net/api/v2
 MASSA_CHAIN_ID=testnet
 
