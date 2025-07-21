@@ -1,0 +1,7 @@
+# Data Storage Directory
+
+This directory separates data storage for different environments:
+
+- `buildnet/` - Real blockchain data logs and cache
+- `virtual/` - Simulated market data and virtual trading logs
+- `shared/` - Common configuration and shared resources

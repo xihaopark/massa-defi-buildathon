@@ -1,3 +1,9 @@
 node_modules
 build
 .env
+
+# Wallet configuration (contains private keys)
+src/config/wallet-config.json
+
+# Local deployment addresses
+src/deployed-addresses.json

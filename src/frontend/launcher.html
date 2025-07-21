@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step1 DeFi System - Choose Environment</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-light: #60a5fa;
+            --success: #10b981;
+            --virtual: #8b5cf6;
+            --virtual-light: #a78bfa;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --surface: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            --border: #334155;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .launcher-container {
+            max-width: 800px;
+            width: 100%;
+            padding: 32px;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 4rem;
+            color: var(--primary);
+            margin-bottom: 24px;
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: -0.025em;
+        }
+        
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 48px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .environments {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 32px;
+            margin-bottom: 48px;
+        }
+        
+        .environment-card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .environment-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .environment-card.buildnet:hover {
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2);
+        }
+        
+        .environment-card.virtual:hover {
+            border-color: var(--virtual);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.2);
+        }
+        
+        .env-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .buildnet .env-icon {
+            color: var(--primary);
+        }
+        
+        .virtual .env-icon {
+            color: var(--virtual);
+        }
+        
+        .env-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        
+        .env-description {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .env-features {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 24px;
+        }
+        
+        .env-features li {
+            padding: 6px 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .env-features li:before {
+            content: '✓';
+            margin-right: 8px;
+            font-weight: bold;
+        }
+        
+        .buildnet .env-features li:before {
+            color: var(--success);
+        }
+        
+        .virtual .env-features li:before {
+            color: var(--virtual);
+        }
+        
+        .env-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .status-live {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-simulation {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--virtual);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .status-live .status-dot {
+            background: var(--success);
+        }
+        
+        .status-simulation .status-dot {
+            background: var(--virtual);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .footer {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .launcher-container {
+                padding: 24px;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .environments {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            
+            .environment-card {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="launcher-container">
+        <div class="logo">
+            <i class="fas fa-cube"></i>
+        </div>
+        
+        <h1 class="title">Step1 DeFi System</h1>
+        <p class="subtitle">
+            Choose your environment to experience AI-powered DeFi trading. 
+            Test algorithms with synthetic data or monitor real blockchain activity.
+        </p>
+        
+        <div class="environments">
+            <!-- Buildnet Environment -->
+            <a href="index.html" class="environment-card buildnet">
+                <div class="env-icon">
+                    <i class="fas fa-network-wired"></i>
+                </div>
+                <h3 class="env-title">Buildnet Monitor</h3>
+                <p class="env-description">
+                    Real-time monitoring of your deployed DeFi system on Massa Buildnet. 
+                    Track actual blockchain transactions and autonomous smart contract execution.
+                </p>
+                <ul class="env-features">
+                    <li>Real blockchain data from Massa Buildnet</li>
+                    <li>Live ASC (Autonomous Smart Contract) monitoring</li>
+                    <li>Actual MAS token balance tracking</li>
+                    <li>True DEX interaction monitoring</li>
+                    <li>Real gas costs and transaction fees</li>
+                </ul>
+                <div class="env-status status-live">
+                    <div class="status-dot"></div>
+                    <span>Live Environment</span>
+                </div>
+            </a>
+            
+            <!-- Virtual Market Environment -->
+            <a href="virtual-market.html" class="environment-card virtual">
+                <div class="env-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="env-title">Virtual Market</h3>
+                <p class="env-description">
+                    Safe testing environment with synthetic market data. 
+                    Perfect for algorithm development, backtesting, and educational purposes.
+                </p>
+                <ul class="env-features">
+                    <li>Synthetic market data generation</li>
+                    <li>Algorithm performance testing</li>
+                    <li>Risk-free trading simulation</li>
+                    <li>Configurable market conditions</li>
+                    <li>Real-time strategy validation</li>
+                </ul>
+                <div class="env-status status-simulation">
+                    <div class="status-dot"></div>
+                    <span>Simulation Mode</span>
+                </div>
+            </a>
+        </div>
+        
+        <div class="footer">
+            <p>
+                Step1 DeFi System - AI-Powered Autonomous Trading | 
+                <a href="https://docs.massa.net/" target="_blank">Massa Documentation</a> | 
+                <a href="https://github.com/xihaopark/massa-defi-buildathon" target="_blank">GitHub Repository</a>
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Add click analytics or environment selection logic here if needed
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.environment-card');
+            cards.forEach(card => {
+                card.addEventListener('click', function(e) {
+                    // Add loading state or transition effect
+                    const title = this.querySelector('.env-title').textContent;
+                    console.log(`Launching ${title} environment...`);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

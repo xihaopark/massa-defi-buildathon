@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step1 DeFi - Security Notice</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --success: #10b981;
+            --bg-primary: #0f172a;
+            --surface: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --border: #334155;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        h1 i {
+            color: var(--warning);
+        }
+        
+        .section {
+            margin-bottom: 32px;
+        }
+        
+        .section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            color: var(--primary);
+        }
+        
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .warning-box h3 {
+            color: var(--warning);
+            margin: 0 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .security-tips {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .security-tips li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: start;
+            gap: 12px;
+        }
+        
+        .security-tips li:last-child {
+            border-bottom: none;
+        }
+        
+        .security-tips i {
+            color: var(--success);
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+        
+        .danger-tips li i {
+            color: var(--error);
+        }
+        
+        .code-example {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 16px;
+            margin-top: 32px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        @media (max-width: 640px) {
+            .card {
+                padding: 24px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1><i class="fas fa-shield-alt"></i> Security Best Practices</h1>
+            
+            <div class="warning-box">
+                <h3><i class="fas fa-exclamation-triangle"></i> Critical Security Warning</h3>
+                <p>Your private key controls your funds. Anyone with access to your private key can steal your assets. Treat it like your bank password - but even more carefully!</p>
+            </div>
+            
+            <div class="section">
+                <h2>✅ DO - Security Best Practices</h2>
+                <ul class="security-tips">
+                    <li>
+                        <i class="fas fa-check"></i>
+                        <div>
+                            <strong>Use Test Accounts on Buildnet</strong><br>
+                            Only use accounts with test funds when experimenting on buildnet
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check"></i>
+                        <div>
+                            <strong>Store Keys Securely</strong><br>
+                            Use encrypted storage or hardware wallets for production keys
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check"></i>
+                        <div>
+                            <strong>Verify Website URLs</strong><br>
+                            Always check you're on the correct website before entering credentials
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check"></i>
+                        <div>
+                            <strong>Use Environment Variables</strong><br>
+                            For automated deployments, use environment variables instead of config files
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check"></i>
+                        <div>
+                            <strong>Regular Backups</strong><br>
+                            Keep secure backups of your keys in multiple safe locations
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h2>❌ DON'T - Common Mistakes</h2>
+                <ul class="security-tips danger-tips">
+                    <li>
+                        <i class="fas fa-times"></i>
+                        <div>
+                            <strong>Never Share Your Private Key</strong><br>
+                            No legitimate service will ever ask for your private key
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-times"></i>
+                        <div>
+                            <strong>Don't Commit Keys to Git</strong><br>
+                            Always add wallet config files to .gitignore
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-times"></i>
+                        <div>
+                            <strong>Avoid Plain Text Storage</strong><br>
+                            Don't save keys in unencrypted text files or emails
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-times"></i>
+                        <div>
+                            <strong>Don't Use Production Keys for Testing</strong><br>
+                            Always use separate accounts for development and production
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h2>🔐 Wallet Configuration Storage</h2>
+                <p>Step1 DeFi stores your wallet configuration using these methods:</p>
+                
+                <h3>Browser Storage (Current Session)</h3>
+                <ul>
+                    <li>• Encrypted with basic Base64 + salt</li>
+                    <li>• Stored in browser localStorage</li>
+                    <li>• Cleared when you clear browser data</li>
+                    <li>• Not accessible to other websites</li>
+                </ul>
+                
+                <h3>Configuration File (Development)</h3>
+                <div class="code-example">
+# Add to .gitignore immediately!
+src/config/wallet-config.json
+                </div>
+                
+                <h3>Recommended Production Setup</h3>
+                <div class="code-example">
+# Use environment variables
+export MASSA_WALLET_ADDRESS="AU12..."
+export MASSA_WALLET_PRIVATE_KEY="S1..."
+
+# Or use a secure key management service
+# - AWS Secrets Manager
+# - HashiCorp Vault
+# - Hardware Security Module (HSM)
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>🚨 If Your Key Is Compromised</h2>
+                <ol style="line-height: 1.8;">
+                    <li>1. Immediately transfer all funds to a new wallet</li>
+                    <li>2. Never use the compromised key again</li>
+                    <li>3. Update all applications using the old key</li>
+                    <li>4. Review how the compromise happened</li>
+                    <li>5. Implement stronger security measures</li>
+                </ol>
+            </div>
+            
+            <div class="buttons">
+                <a href="launcher.html" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Back to App
+                </a>
+                <a href="https://docs.massa.net/docs/learn/wallet/intro" target="_blank" class="btn btn-secondary">
+                    <i class="fas fa-book"></i> Massa Wallet Docs
+                </a>
+                <a href="https://github.com/massalabs/massa-wallet" target="_blank" class="btn btn-secondary">
+                    <i class="fab fa-github"></i> Official Wallet
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
