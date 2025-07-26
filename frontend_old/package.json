@@ -1,0 +1,29 @@
+{
+  "name": "step1-defi-frontend",
+  "version": "1.0.0",
+  "description": "Step1 DeFi System Frontend - Deployed on Massa DeWeb",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && npx @massalabs/deweb-cli upload dist",
+    "serve": "vite preview --port 3000"
+  },
+  "dependencies": {
+    "@massalabs/massa-web3": "^5.2.1-dev",
+    "chart.js": "^4.4.0",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^2.30.0",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8"
+  }
+}

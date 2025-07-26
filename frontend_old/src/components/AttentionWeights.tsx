@@ -162,25 +162,30 @@ const AttentionWeights: React.FC<AttentionWeightsProps> = ({ data, isLoading }) 
       </div>
 
       {/* Chart container */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', height: '300px' }}>
-        <div>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: '1fr 1fr', 
+        gap: '20px', 
+        maxWidth: '100%'
+      }}>
+        <div style={{ height: 300, width: '90%', margin: '0 auto', minWidth: 0 }}>
           <h4 style={{ textAlign: 'center', marginBottom: '10px', fontSize: '0.9rem' }}>
             Distribution View
           </h4>
           <Doughnut 
-            ref={chartRef}
             data={doughnutData} 
             options={chartOptions}
+            height={250}
           />
         </div>
-        
-        <div>
+        <div style={{ height: 300, width: '90%', margin: '0 auto', minWidth: 0 }}>
           <h4 style={{ textAlign: 'center', marginBottom: '10px', fontSize: '0.9rem' }}>
             Comparison View
           </h4>
           <Bar 
             data={barData} 
             options={barOptions}
+            height={250}
           />
         </div>
       </div>

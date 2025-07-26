@@ -33,12 +33,22 @@
         "fmt:check": "npm run prettier && npm run lint",
         "fmt": "npm run prettier:fix && npm run lint:fix"
     },
-    "keywords": ["massa", "defi", "autonomous", "trading", "blockchain", "asc", "smart-contracts"],
+    "keywords": [
+        "massa",
+        "defi",
+        "autonomous",
+        "trading",
+        "blockchain",
+        "asc",
+        "smart-contracts"
+    ],
     "author": "xihaopark",
     "license": "MIT",
     "devDependencies": {
         "@as-pect/cli": "^8.1.0",
         "@assemblyscript/loader": "^0.27.29",
+        "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
+        "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@massalabs/as-types": "^2.0.0",
         "@massalabs/eslint-config": "^0.0.11",
         "@massalabs/massa-as-sdk": "^3.0.2",
@@ -53,7 +63,8 @@
         "prettier": "^2.8.1",
         "tslib": "^2.4.0",
         "tsx": "^4.7.0",
-        "typescript": "^4.8.4"
+        "typescript": "^4.8.4",
+        "vite-plugin-node-polyfills": "^0.24.0"
     },
     "overrides": {
         "visitor-as": {
