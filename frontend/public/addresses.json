@@ -1,0 +1,21 @@
+{
+  "vault": "AS12shXJLaEJiv8da5Bc35b5xq9r9szkar9i3BtnMMKnd2fjJHGad",
+  "dex": "AS12Da1qWr1ndnTZrkr38DeWeoH5gFcRcqnripYhKy7UkPggX72ME",
+  "step1": {
+    "main": "AS12FWRKui3k2T8pi7pjF4KxUnueGWixnj85kn9j9EXADt6NvAXY1",
+    "threads": [
+      {
+        "id": 0,
+        "address": "AS12Pm77Wf5pVkhvXGcGeMKXdm5HssgkWvFRC1xPVDtrrygQgaeXw"
+      },
+      {
+        "id": 1,
+        "address": "AS1Xo9XY1kxQD8Mqxri82JNxk97PXPazLZnnnD4foBUjBVMwL2AW"
+      },
+      {
+        "id": 2,
+        "address": "AS124TYaaap2mH3ZgPyhkTATNhS9X4kHY8tqqxe2FLAJZ8awJFaMZ"
+      }
+    ]
+  }
+}
