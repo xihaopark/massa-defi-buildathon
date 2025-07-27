@@ -1,10 +1,17 @@
 export interface WalletState {
-  provider: unknown | null; // Flexible type for provider
-  wallet: unknown | null; // Wallet provider instance from getWallets()
+  provider: unknown | null;
+  wallet: unknown | null;
   balance: string;
   isConnected: boolean;
   isLoading: boolean;
   error: string | null;
+  address: string;
+}
+
+export interface WalletAccount {
+  address: string;
+  name?: string;
+  balance?: string;
 }
 
 export interface ContractAddresses {
@@ -18,4 +25,6 @@ export interface WalletConnectionResult {
   wallet?: unknown;
   balance?: string;
   error?: string;
+  address?: string;
+  accounts?: WalletAccount[];
 } 

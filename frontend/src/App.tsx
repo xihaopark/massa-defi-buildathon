@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled, { keyframes, createGlobalStyle } from 'styled-components';
 import OdinLogoV from './assets/odin-logo-v.svg';
 import OdinLogoH from './assets/odin-logo-h.svg';
 import ExpandArrow from './assets/expand-arrow.svg';
 import MassaLogo from './assets/massa-logo.jpeg';
-import { connectWithPrivateKey, disconnectWallet } from './utils/massaWallet';
-import type { WalletState } from './types';
+import { connectWithPrivateKey, disconnectWallet, connectWalletBuildnet, connectWithAccount } from './utils/massaWallet';
+import type { WalletState, WalletAccount } from './types';
 
 const GlobalStyle = createGlobalStyle`
   html, body, #root {
@@ -15,6 +15,7 @@ const GlobalStyle = createGlobalStyle`
     background: #0A1226;
     min-height: 100vh;
     width: 100vw;
+    font-family: 'Liter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 `;
 
@@ -92,7 +93,7 @@ const PageContainer = styled.div`
   min-height: 100vh;
   width: 100vw;
   background: #0A1226;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Liter', -apple-system, BlinkMacSystemFont, sans-serif;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -252,20 +253,22 @@ const ModalBackdrop = styled.div`
 `;
 
 const ModalPanel = styled.div`
-  background: #181f36;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px #0008;
-  padding: 28px 48px 56px 48px;
-  width: 520px;
-  min-width: 520px;
-  height: 600px;
-  max-width: 95vw;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  background: #1a2337;
+  border-radius: 12px;
+  padding: 32px;
+  width: 90%;
+  max-width: 480px;
   position: relative;
-  animation: ${loginFadeInUp} 0.5s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  animation: ${loginFadeInUp} 0.4s cubic-bezier(0.4,0,0.2,1);
+  height: 500px;
   overflow-y: auto;
+  overflow-x: hidden;
+  
+  /* Ensure scroll events work properly */
+  &:hover {
+    overflow-y: auto;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -296,7 +299,9 @@ const TabsContainer = styled.div`
   margin-top: 28px;
 `;
 
-const Tab = styled.button<{ active?: boolean }>`
+const Tab = styled.button.withConfig({
+  shouldForwardProp: (prop) => prop !== 'active'
+})<{ active?: boolean }>`
   flex: 1;
   background: none;
   border: none;
@@ -373,14 +378,18 @@ const ForgotLink = styled.a`
   }
 `;
 
-const SlidingTabsContainer = styled.div<{ activeTab: 'login' | 'wallet' }>`
+const SlidingTabsContainer = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'activeTab'
+})<{ activeTab: 'login' | 'wallet' }>`
   width: 100%;
   min-height: 340px;
   overflow: hidden;
   position: relative;
 `;
 
-const SlidingTabsInner = styled.div<{ activeTab: 'login' | 'wallet' }>`
+const SlidingTabsInner = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'activeTab'
+})<{ activeTab: 'login' | 'wallet' }>`
   display: flex;
   width: 200%;
   transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
@@ -388,12 +397,10 @@ const SlidingTabsInner = styled.div<{ activeTab: 'login' | 'wallet' }>`
 `;
 
 const SlidingTabContent = styled.div`
-  width: 50%;
-  min-width: 50%;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  width: 100%;
+  overflow-y: auto;
+  max-height: 60vh;
 `;
 
 const LoginTabContent = styled.div`
@@ -426,7 +433,7 @@ const HomepageContainer = styled.div`
   min-height: 100vh;
   width: 100vw;
   background: #0A1226;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Liter', -apple-system, BlinkMacSystemFont, sans-serif;
   display: flex;
   flex-direction: column;
   animation: ${homepageFadeIn} 0.8s cubic-bezier(0.4,0,0.2,1);
@@ -597,6 +604,54 @@ const CoinAmount = styled.div`
   font-size: 1rem;
 `;
 
+const WalletAddressSection = styled.div`
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #232b4a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #aaa;
+  font-size: 0.85rem;
+  position: relative;
+  
+  &:hover .copy-button {
+    opacity: 1;
+  }
+`;
+
+const WalletAddressLabel = styled.span`
+  font-weight: 500;
+  white-space: nowrap;
+`;
+
+const WalletAddressValue = styled.span`
+  font-family: 'Monospace', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  cursor: pointer;
+`;
+
+const CopyButton = styled.button`
+  background: #00F5FF;
+  color: #0A1226;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+  
+  &:hover {
+    background: #00D4DD;
+  }
+`;
+
 const EmptyState = styled.div`
   display: flex;
   flex-direction: column;
@@ -625,45 +680,80 @@ const EmptyStateSubtext = styled.div`
 
 const DisconnectMessage = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: #1a2337;
-  color: #fff;
-  padding: 12px 0;
-  text-align: center;
-  font-weight: 600;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 245, 255, 0.9);
+  color: #0A1226;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: 500;
   font-size: 0.9rem;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  z-index: 2000;
+  font-family: 'Liter', -apple-system, BlinkMacSystemFont, sans-serif;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 245, 255, 0.3);
+  backdrop-filter: blur(8px);
 `;
 
+const CopySuccessMessage = styled.div`
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 245, 255, 0.9);
+  color: #0A1226;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  font-family: 'Liter', -apple-system, BlinkMacSystemFont, sans-serif;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 245, 255, 0.3);
+  backdrop-filter: blur(8px);
+`;
 
 
 // WalletsList and WalletOption styles for Connect Wallets tab
 const WalletsList = styled.div`
-  width: 100%;
-  margin: 32px auto 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
+  width: 100%;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: 8px;
 `;
 
-const WalletOption = styled.button`
+const WalletOption = styled.button.withConfig({
+  shouldForwardProp: (prop) => prop !== 'expanded'
+})<{ expanded?: boolean }>`
+  background: ${({ expanded }) => expanded ? '#232b4a' : 'transparent'};
+  border: none;
+  padding: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  font-family: inherit;
   display: flex;
   align-items: center;
-  width: 100%;
-  background: #20294a;
-  border: 2px solid #232b4a;
-  border-radius: 12px;
-  padding: 18px 20px;
-  cursor: pointer;
-  transition: border 0.18s, background 0.18s, box-shadow 0.18s;
-  box-shadow: 0 2px 12px #00F5FF11;
-  &:hover, &:focus {
-    border: 2px solid #00F5FF;
+  gap: 12px;
+  position: relative;
+  
+  &:hover {
     background: #232b4a;
-    box-shadow: 0 4px 18px #00F5FF33;
+  }
+  
+  &:focus {
+    outline: none;
+    background: #232b4a;
+  }
+  
+  /* Ensure scroll events pass through */
+  &:hover {
+    pointer-events: auto;
   }
 `;
 
@@ -720,14 +810,14 @@ function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
-  // Wallet state
   const [walletState, setWalletState] = useState<WalletState>({
     provider: null,
     wallet: null,
     balance: '0',
     isConnected: false,
     isLoading: false,
-    error: null
+    error: null,
+    address: ''
   });
   
   const [showMassaInput, setShowMassaInput] = useState(false);
@@ -735,10 +825,148 @@ function App() {
   const [inputPrivateKey, setInputPrivateKey] = useState('');
   const [inputError, setInputError] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isConnectingMassaStation, setIsConnectingMassaStation] = useState(false);
+  const [availableAccounts, setAvailableAccounts] = useState<WalletAccount[]>([]);
+  const [showAccountSelection, setShowAccountSelection] = useState(false);
+  const [selectedWallet, setSelectedWallet] = useState<unknown>(null);
+  const [currentNetwork, setCurrentNetwork] = useState<string>('');
   
-  // Homepage state
+  const [cachedMassaStationData, setCachedMassaStationData] = useState<{
+    accounts: WalletAccount[];
+    wallet: unknown;
+    network: string;
+  } | null>(null);
+  
+  const [connectionListener, setConnectionListener] = useState<{
+    isListening: boolean;
+    lastUpdate: number;
+  }>({ isListening: false, lastUpdate: 0 });
+  
   const [showHomepage, setShowHomepage] = useState(false);
   const [showDisconnectMessage, setShowDisconnectMessage] = useState(false);
+  const [showCopyMessage, setShowCopyMessage] = useState(false);
+  const [accountConnected, setAccountConnected] = useState(false);
+
+  useEffect(() => {
+    if (!cachedMassaStationData?.wallet || !connectionListener.isListening) {
+      return;
+    }
+
+    const checkConnectionChanges = async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const walletProvider = cachedMassaStationData.wallet as any;
+        
+        if (walletProvider && typeof walletProvider.isConnected === 'function') {
+          const isConnected = await walletProvider.isConnected();
+          if (!isConnected) {
+            setCachedMassaStationData(null);
+            setConnectionListener({ isListening: false, lastUpdate: Date.now() });
+            setAvailableAccounts([]);
+            setSelectedWallet(null);
+            setCurrentNetwork('');
+            setShowAccountSelection(false);
+            return;
+          }
+        }
+
+        let shouldRefresh = false;
+        let newNetwork = cachedMassaStationData.network;
+        
+        if (walletProvider && typeof walletProvider.getAccounts === 'function') {
+          const newAccounts = await walletProvider.getAccounts();
+          if (newAccounts && newAccounts.length !== cachedMassaStationData.accounts.length) {
+            shouldRefresh = true;
+          }
+        }
+        
+        try {
+          if (walletProvider.networkInfos && typeof walletProvider.networkInfos === 'function') {
+            const networkInfo = await walletProvider.networkInfos();
+            if (networkInfo && networkInfo.name) {
+              newNetwork = networkInfo.name.toLowerCase();
+            } else if (networkInfo && typeof networkInfo === 'string') {
+              newNetwork = networkInfo.toLowerCase();
+            } else if (networkInfo && networkInfo.network) {
+              newNetwork = networkInfo.network.toLowerCase();
+            }
+          } else if (walletProvider.getNetwork && typeof walletProvider.getNetwork === 'function') {
+            const network = await walletProvider.getNetwork();
+            newNetwork = network || '';
+          } else if (walletProvider.network && typeof walletProvider.network === 'string') {
+            newNetwork = walletProvider.network;
+          } else if (walletProvider.getChainId && typeof walletProvider.getChainId === 'function') {
+            const chainId = await walletProvider.getChainId();
+            newNetwork = chainId === 77658366 ? 'mainnet' : 'buildnet';
+          } else if (walletProvider.chainId && typeof walletProvider.chainId === 'number') {
+            newNetwork = walletProvider.chainId === 77658366 ? 'mainnet' : 'buildnet';
+          }
+          
+          if (newNetwork !== cachedMassaStationData.network) {
+            shouldRefresh = true;
+            console.log('Network changed from', cachedMassaStationData.network, 'to', newNetwork);
+          }
+        } catch (networkError) {
+          console.log('Could not get network from wallet provider:', networkError);
+        }
+        
+        if (shouldRefresh) {
+          console.log('Refreshing Massa Station connection data due to changes');
+          const result = await connectWalletBuildnet();
+          if (result.success && result.accounts) {
+            let detectedNetwork = '';
+            
+            try {
+              if (walletProvider.networkInfos && typeof walletProvider.networkInfos === 'function') {
+                const networkInfo = await walletProvider.networkInfos();
+                if (networkInfo && networkInfo.name) {
+                  detectedNetwork = networkInfo.name.toLowerCase();
+                } else if (networkInfo && typeof networkInfo === 'string') {
+                  detectedNetwork = networkInfo.toLowerCase();
+                } else if (networkInfo && networkInfo.network) {
+                  detectedNetwork = networkInfo.network.toLowerCase();
+                }
+              } else if (walletProvider.getNetwork && typeof walletProvider.getNetwork === 'function') {
+                const network = await walletProvider.getNetwork();
+                detectedNetwork = network || '';
+              } else if (walletProvider.network && typeof walletProvider.network === 'string') {
+                detectedNetwork = walletProvider.network;
+              } else if (walletProvider.getChainId && typeof walletProvider.getChainId === 'function') {
+                const chainId = await walletProvider.getChainId();
+                detectedNetwork = chainId === 77658366 ? 'mainnet' : 'buildnet';
+              } else if (walletProvider.chainId && typeof walletProvider.chainId === 'number') {
+                detectedNetwork = walletProvider.chainId === 77658366 ? 'mainnet' : 'buildnet';
+              }
+            } catch (networkError) {
+              console.log('Could not get network from wallet provider:', networkError);
+              detectedNetwork = '';
+            }
+
+            const updatedData = {
+              accounts: result.accounts,
+              wallet: result.wallet,
+              network: detectedNetwork
+            };
+            
+            setCachedMassaStationData(updatedData);
+            
+            if (showAccountSelection) {
+              setAvailableAccounts(result.accounts);
+              setCurrentNetwork(detectedNetwork);
+            }
+            
+            setConnectionListener(prev => ({ ...prev, lastUpdate: Date.now() }));
+          }
+        }
+      } catch (error) {
+        console.error('Error checking connection changes:', error);
+      }
+    };
+
+    const interval = setInterval(checkConnectionChanges, 1000);
+    
+    return () => clearInterval(interval);
+  }, [cachedMassaStationData, connectionListener.isListening, showAccountSelection]);
 
   const handleOpenModal = () => setShowModal(true);
   const handleCloseModal = () => {
@@ -751,22 +979,178 @@ function App() {
     setShowLedgerInput(false);
     setInputPrivateKey('');
     setInputError('');
+    setCachedMassaStationData(null);
+    setAvailableAccounts([]);
+    setSelectedWallet(null);
+    setCurrentNetwork('');
+    setShowAccountSelection(false);
+    setConnectionListener({ isListening: false, lastUpdate: Date.now() });
   };
 
-  // Handler for Massa Wallet connect (toggle accordion)
   const handleConnectMassaWallet = () => {
+    setShowLedgerInput(false);
+    setShowAccountSelection(false);
     setShowMassaInput((prev) => !prev);
     setInputError('');
   };
 
-  // Handler for Ledger Wallet connect (toggle accordion)
   const handleConnectLedgerWallet = () => {
+    setShowMassaInput(false);
+    setShowAccountSelection(false);
     setShowLedgerInput((prev) => !prev);
   };
 
+  const handleConnectMassaStation = async () => {
+    if (showAccountSelection) {
+      setShowAccountSelection(false);
+      return;
+    }
+
+    setShowMassaInput(false);
+    setShowLedgerInput(false);
+
+    if (cachedMassaStationData) {
+      setAvailableAccounts(cachedMassaStationData.accounts);
+      setSelectedWallet(cachedMassaStationData.wallet);
+      setCurrentNetwork(cachedMassaStationData.network);
+      setShowAccountSelection(true);
+      setInputError('');
+      return;
+    }
+
+    setIsConnectingMassaStation(true);
+    setInputError('');
+    setWalletState(prev => ({ ...prev, isLoading: true, error: null }));
+    
+    try {
+      const result = await connectWalletBuildnet();
+      
+      if (result.success && result.accounts) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const walletProvider = result.wallet as any;
+        let detectedNetwork = '';
+        
+        try {
+          if (walletProvider.networkInfos && typeof walletProvider.networkInfos === 'function') {
+            const networkInfo = await walletProvider.networkInfos();
+            console.log("Network info:", networkInfo);
+            
+            if (networkInfo && networkInfo.name) {
+              detectedNetwork = networkInfo.name.toLowerCase();
+            } else if (networkInfo && typeof networkInfo === 'string') {
+              detectedNetwork = networkInfo.toLowerCase();
+            } else if (networkInfo && networkInfo.network) {
+              detectedNetwork = networkInfo.network.toLowerCase();
+            }
+          } else {
+            console.log('networkInfos() method not available, trying fallback methods');
+            
+            if (walletProvider.getNetwork && typeof walletProvider.getNetwork === 'function') {
+              const network = await walletProvider.getNetwork();
+              console.log('getNetwork() result:', network);
+              detectedNetwork = network || '';
+            } else if (walletProvider.network && typeof walletProvider.network === 'string') {
+              console.log('Using walletProvider.network:', walletProvider.network);
+              detectedNetwork = walletProvider.network;
+            } else if (walletProvider.getChainId && typeof walletProvider.getChainId === 'function') {
+              const chainId = await walletProvider.getChainId();
+              console.log('getChainId() result:', chainId);
+              detectedNetwork = chainId === 77658366 ? 'mainnet' : 'buildnet';
+            } else if (walletProvider.chainId && typeof walletProvider.chainId === 'number') {
+              console.log('Using walletProvider.chainId:', walletProvider.chainId);
+              detectedNetwork = walletProvider.chainId === 77658366 ? 'mainnet' : 'buildnet';
+            } else {
+              if (result.accounts && result.accounts.length > 0) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const firstAccount = result.accounts[0] as any;
+                console.log('First account properties:', Object.getOwnPropertyNames(firstAccount));
+                console.log('First account network:', firstAccount.network);
+                if (firstAccount.provider && firstAccount.provider.network) {
+                  console.log('Account provider network:', firstAccount.provider.network);
+                  detectedNetwork = firstAccount.provider.network;
+                } else if (firstAccount.network) {
+                  console.log('Account network:', firstAccount.network);
+                  detectedNetwork = firstAccount.network;
+                }
+              }
+            }
+          }
+          
+          console.log('Final detected network:', detectedNetwork);
+        } catch (networkError) {
+          console.log('Could not get network from wallet provider:', networkError);
+          detectedNetwork = '';
+        }
+        
+        const connectionData = {
+          accounts: result.accounts,
+          wallet: result.wallet,
+          network: detectedNetwork
+        };
+        setCachedMassaStationData(connectionData);
+        
+        setConnectionListener({ isListening: true, lastUpdate: Date.now() });
+        
+        setAvailableAccounts(result.accounts);
+        setSelectedWallet(result.wallet);
+        setCurrentNetwork(detectedNetwork);
+        setShowAccountSelection(true);
+        setWalletState(prev => ({ ...prev, isLoading: false }));
+      } else {
+        setInputError(result.error || 'Failed to connect to Massa Station');
+        setWalletState(prev => ({ ...prev, isLoading: false, error: result.error || 'Connection failed' }));
+      }
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to connect to Massa Station.';
+      setInputError(errorMessage);
+      setWalletState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
+      console.error('Massa Station connection error:', err);
+    } finally {
+      setIsConnectingMassaStation(false);
+    }
+  };
+
+  const handleSelectAccount = async (accountIndex: number) => {
+    if (!selectedWallet) return;
+    
+    setIsConnectingMassaStation(true);
+    setInputError('');
+    
+    try {
+      const result = await connectWithAccount(selectedWallet, accountIndex);
+      
+      if (result.success) {
+        setWalletState({
+          provider: result.provider || null,
+          wallet: result.wallet || null,
+          balance: result.balance || '0',
+          isConnected: true,
+          isLoading: false,
+          error: null,
+          address: result.address || ''
+        });
+        
+        setAccountConnected(true);
+        
+        setTimeout(() => {
+          setShowHomepage(true);
+          setAccountConnected(false);
+        }, 1500);
+      } else {
+        setInputError(result.error || 'Failed to connect with selected account');
+      }
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to connect with selected account.';
+      setInputError(errorMessage);
+      console.error('Account selection error:', err);
+    } finally {
+      setIsConnectingMassaStation(false);
+    }
+  };
 
 
-  // Handler for disconnecting wallet
   const handleDisconnectWallet = async () => {
     if (walletState.wallet) {
       await disconnectWallet(walletState.wallet);
@@ -778,20 +1162,37 @@ function App() {
       balance: '0',
       isConnected: false,
       isLoading: false,
-      error: null
+      error: null,
+      address: ''
     });
     
     setShowHomepage(false);
     setShowModal(false);
     setShowDisconnectMessage(true);
     
-    // Auto-hide message and return to landing page after 1.5 seconds
+    setCachedMassaStationData(null);
+    setAvailableAccounts([]);
+    setSelectedWallet(null);
+    setCurrentNetwork('');
+    setShowAccountSelection(false);
+    
     setTimeout(() => {
       setShowDisconnectMessage(false);
     }, 1500);
   };
 
-  // Handler for Massa Wallet input submit
+  const handleCopyAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(walletState.address);
+      setShowCopyMessage(true);
+      setTimeout(() => {
+        setShowCopyMessage(false);
+      }, 1500);
+    } catch (err) {
+      console.error('Failed to copy address:', err);
+    }
+  };
+
   const handleMassaInputSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputPrivateKey) {
@@ -804,8 +1205,7 @@ function App() {
     setWalletState(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
-      // Use the wallet connection utility with only private key
-      const result = await connectWithPrivateKey('', inputPrivateKey);
+      const result = await connectWithPrivateKey(inputPrivateKey);
       
       if (result.success) {
         setWalletState({
@@ -814,14 +1214,13 @@ function App() {
           balance: result.balance || '0',
           isConnected: true,
           isLoading: false,
-          error: null
+          error: null,
+          address: result.address || ''
         });
         
-        // Show success message in place of input
         setInputPrivateKey('');
         setInputError('');
         
-        // Show homepage after 1.5 seconds
         setTimeout(() => {
           setShowHomepage(true);
         }, 1500);
@@ -847,6 +1246,11 @@ function App() {
         <DisconnectMessage>
           Wallet disconnected successfully
         </DisconnectMessage>
+      )}
+      {showCopyMessage && (
+        <CopySuccessMessage>
+          Address copied to clipboard
+        </CopySuccessMessage>
       )}
       {showHomepage ? (
         <HomepageContainer>
@@ -906,6 +1310,13 @@ function App() {
                     </CoinInfo>
                     <CoinAmount>{parseFloat(walletState.balance || '0').toFixed(2)}</CoinAmount>
                   </CoinBalance>
+                  {walletState.address && (
+                    <WalletAddressSection>
+                      <WalletAddressLabel>Address:</WalletAddressLabel>
+                      <WalletAddressValue>{walletState.address}</WalletAddressValue>
+                      <CopyButton className="copy-button" onClick={handleCopyAddress}>Copy</CopyButton>
+                    </WalletAddressSection>
+                  )}
                 </WalletSummary>
               </SectionCard>
             </GridContainer>
@@ -934,18 +1345,203 @@ function App() {
                 <SlidingTabsInner activeTab={activeTab}>
                   <SlidingTabContent>
                     <WalletsList>
-                      <WalletOption onClick={handleConnectMassaWallet} style={{ flexDirection: 'column', alignItems: 'stretch', paddingBottom: showMassaInput ? 0 : undefined }}>
+                      <WalletOption expanded={showAccountSelection} onClick={handleConnectMassaStation} style={{ flexDirection: 'column', alignItems: 'stretch', paddingBottom: showAccountSelection ? 0 : undefined }}>
                         <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                           <WalletIcon>
-                            <svg width="28" height="28" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="#00F5FF" /></svg>
+                            <svg width="28" height="28" viewBox="0 0 48 48"><circle cx="24" cy="24" r="21" fill="#1AE19D" /></svg>
+                          </WalletIcon>
+                          <WalletInfo>
+                            <WalletName>
+                              {isConnectingMassaStation ? 'Connecting...' : 'Massa Station'}
+                            </WalletName>
+                            <WalletDesc>
+                              {isConnectingMassaStation ? 'Please wait...' : 'Connect with Massa Station extension'}
+                            </WalletDesc>
+                            {inputError && !isConnectingMassaStation && (
+                              <div style={{ 
+                                color: '#FFD700', 
+                                fontSize: '0.85rem', 
+                                marginTop: 4,
+                                width: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                textAlign: 'left',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                Error: {inputError}
+                              </div>
+                            )}
+                          </WalletInfo>
+                          <WalletArrow>
+                            <img 
+                              src={ExpandArrow} 
+                              alt="expand" 
+                              style={{ 
+                                width: '16px', 
+                                height: '16px',
+                                transform: showAccountSelection ? 'rotate(180deg)' : 'rotate(90deg)',
+                                transition: 'transform 0.2s ease',
+                                filter: 'invert(85%) sepia(100%) saturate(1000%) hue-rotate(180deg)'
+                              }} 
+                            />
+                          </WalletArrow>
+                        </div>
+                        {showAccountSelection && (
+                          <AccordionInputContainer onClick={e => e.stopPropagation()}>
+                            {accountConnected ? (
+                              <div style={{ 
+                                width: '100%', 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                alignItems: 'center', 
+                                paddingLeft: '20px', 
+                                paddingRight: '20px',
+                                paddingBottom: '20px'
+                              }}>
+                                <div style={{ 
+                                  color: '#10B981', 
+                                  fontSize: '1.1rem', 
+                                  fontWeight: '600',
+                                  textAlign: 'center',
+                                  marginBottom: '10px'
+                                }}>
+                                  ✓ Connected Successfully
+                                </div>
+                                <div style={{ 
+                                  color: '#aaa', 
+                                  fontSize: '0.9rem', 
+                                  textAlign: 'center',
+                                  lineHeight: '1.4'
+                                }}>
+                                  Redirecting to homepage...
+                                </div>
+                              </div>
+                            ) : (
+                            <div style={{ 
+                              width: 'calc(100% - 40px)', 
+                              display: 'flex', 
+                              flexDirection: 'column', 
+                              alignItems: 'flex-start', 
+                              paddingBottom: '20px',
+                              maxWidth: 'calc(100% - 40px)',
+                              overflow: 'hidden',
+                              margin: '0 auto'
+                            }}>
+                              <div style={{ 
+                                color: '#aaa', 
+                                fontSize: '0.9rem', 
+                                marginBottom: '12px',
+                                fontWeight: '500',
+                                textAlign: 'left',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                width: '100%'
+                              }}>
+                                <span>Select an account to connect:</span>
+                                <span style={{ 
+                                  color: '#00F5FF', 
+                                  fontWeight: '600'
+                                }}>
+                                  {currentNetwork || ''}
+                                </span>
+                              </div>
+                              {availableAccounts.map((account, index) => {
+                                const address = account.address;
+                                const abbreviatedAddress = address.length > 9 
+                                  ? `${address.substring(0, 6)}...${address.substring(address.length - 3)}`
+                                  : address;
+                                
+                                return (
+                                  <div
+                                    key={account.address}
+                                    onClick={() => handleSelectAccount(index)}
+                                    style={{
+                                      width: 'calc(100% - 34px)',
+                                      padding: '8px 15px',
+                                      marginBottom: '6px',
+                                      backgroundColor: '#1a2337',
+                                      borderRadius: '6px',
+                                      cursor: 'pointer',
+                                      border: '1px solid #232b4a',
+                                      transition: 'all 0.2s ease',
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      minHeight: '40px',
+                                      overflow: 'auto'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.backgroundColor = '#232b4a';
+                                      e.currentTarget.style.borderColor = '#00F5FF';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.backgroundColor = '#1a2337';
+                                      e.currentTarget.style.borderColor = '#232b4a';
+                                    }}
+                                  >
+                                    <div style={{ 
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'flex-start',
+                                      flex: 1,
+                                      minWidth: 0,
+                                      marginRight: '8px',
+                                      overflow: 'hidden'
+                                    }}>
+                                      <div style={{ 
+                                        color: '#fff', 
+                                        fontSize: '0.85rem', 
+                                        fontWeight: '500',
+                                        marginBottom: '2px',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        maxWidth: '100%'
+                                      }}>
+                                        {account.name}
+                                      </div>
+                                      <div style={{ 
+                                        color: '#aaa', 
+                                        fontSize: '0.7rem',
+                                        fontFamily: 'Monospace, monospace',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        maxWidth: '100%'
+                                      }}>
+                                        ({abbreviatedAddress})
+                                      </div>
+                                    </div>
+                                    <div style={{ 
+                                      color: '#00F5FF', 
+                                      fontSize: '0.85rem',
+                                      fontWeight: '500',
+                                      whiteSpace: 'nowrap',
+                                      flexShrink: 0
+                                    }}>
+                                      {parseFloat(account.balance || '0').toFixed(2)} MAS
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            )}
+                          </AccordionInputContainer>
+                        )}
+                      </WalletOption>
+                      <WalletOption expanded={showMassaInput} onClick={handleConnectMassaWallet} style={{ flexDirection: 'column', alignItems: 'stretch', paddingBottom: showMassaInput ? 0 : undefined }}>
+                        <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                          <WalletIcon>
+                          <svg width="25px" height="25px" viewBox="0 0 0.5 0.5"><path fill="#00F5FF" d="M0.25 0.039a0.063 0.063 0 0 0 -0.055 0.031L0.214 0.083 0.195 0.071 0.017 0.363a0.063 0.063 0 0 0 0.023 0.088q0.014 0.009 0.032 0.009h0.355A0.063 0.063 0 0 0 0.484 0.428a0.063 0.063 0 0 0 0 -0.065L0.306 0.071A0.063 0.063 0 0 0 0.25 0.039"/></svg>
                           </WalletIcon>
                                                   <WalletInfo>
                           <WalletName>
                             {isConnecting ? 'Connecting...' : 
-                             walletState.isConnected ? 'Connected to Buildnet' : 'Massa Wallet (Buildnet)'}
+                             walletState.isConnected ? 'Connected to Buildnet' : 'Massa Wallet'}
                           </WalletName>
                           <WalletDesc>
-                            {isConnecting ? 'Please wait...' : 'Connect with private key'}
+                            {isConnecting ? 'Please wait...' : 'Connect to buildnet with private key'}
                           </WalletDesc>
                           {walletState.isConnected && (
                             <div style={{ 
@@ -1026,7 +1622,7 @@ function App() {
                                 placeholder="Private Key (S1...)"
                                 value={inputPrivateKey}
                                 onChange={e => setInputPrivateKey(e.target.value)}
-                                style={{ marginBottom: 16, width: '100%', fontSize: '1.08rem' }}
+                                style={{ marginBottom: 16, width: '100%', fontSize: '0.85rem' }}
                               />
                               {inputError && <div style={{ color: '#FFD700', marginBottom: 10, width: '100%' }}>{inputError}</div>}
                               <FormLoginButton 
@@ -1041,10 +1637,10 @@ function App() {
                           </AccordionInputContainer>
                         )}
                       </WalletOption>
-                        <WalletOption onClick={handleConnectLedgerWallet} style={{ flexDirection: 'column', alignItems: 'stretch', paddingBottom: showLedgerInput ? 0 : undefined }}>
+                        <WalletOption expanded={showLedgerInput} onClick={handleConnectLedgerWallet} style={{ flexDirection: 'column', alignItems: 'stretch', paddingBottom: showLedgerInput ? 0 : undefined }}>
                           <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                         <WalletIcon>
-                          <svg width="28" height="28" viewBox="0 0 48 48"><rect x="8" y="8" width="32" height="32" rx="8" fill="#FFD700" /></svg>
+                          <svg width="28" height="28" viewBox="0 0 48 48"><rect x="8" y="8" width="35" height="35" rx="8" fill="#FFD700" /></svg>
                         </WalletIcon>
                         <WalletInfo>
                           <WalletName>Ledger</WalletName>
@@ -1082,7 +1678,7 @@ function App() {
                                   textAlign: 'center',
                                   marginBottom: '10px'
                                 }}>
-                                  Coming Soon
+                                  COMING SOON
                                 </div>
                                 <div style={{ 
                                   color: '#aaa', 
@@ -1145,7 +1741,7 @@ function App() {
                             lineHeight: '1.4',
                             maxWidth: '280px'
                           }}>
-                            Traditional login functionality will be available in a future update.
+                            Social and Email login will be available in a future update.
                           </div>
                         </ComingSoonOverlay>
                       </LoginTabContent>
