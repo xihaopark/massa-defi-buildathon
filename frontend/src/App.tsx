@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styled, { keyframes, createGlobalStyle } from 'styled-components';
 import OdinLogoV from './assets/odin-logo-v.svg';
 import OdinLogoH from './assets/odin-logo-h.svg';
@@ -261,14 +261,8 @@ const ModalPanel = styled.div`
   position: relative;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   animation: ${loginFadeInUp} 0.4s cubic-bezier(0.4,0,0.2,1);
-  height: 500px;
-  overflow-y: auto;
+  height: 600px;
   overflow-x: hidden;
-  
-  /* Ensure scroll events work properly */
-  &:hover {
-    overflow-y: auto;
-  }
 `;
 
 const CloseButton = styled.button`
@@ -448,6 +442,8 @@ const Header = styled.header`
   backdrop-filter: blur(10px);
   border-bottom: 1px solid #232b4a;
   animation: ${headerSlideIn} 0.6s cubic-bezier(0.4,0,0.2,1) 0.2s both;
+  position: relative;
+  z-index: 3000;
 `;
 
 const HeaderLogo = styled.img`
@@ -460,6 +456,8 @@ const HeaderWalletInfo = styled.div`
   align-items: center;
   gap: 16px;
   color: #fff;
+  position: relative;
+  z-index: 3000;
 `;
 
 const WalletBalance = styled.div`
@@ -495,6 +493,8 @@ const MainContent = styled.main`
   margin: 0 auto;
   width: 100%;
   animation: ${contentFadeIn} 0.8s cubic-bezier(0.4,0,0.2,1) 0.4s both;
+  position: relative;
+  z-index: 0;
 `;
 
 const SectionTitle = styled.h2`
@@ -516,18 +516,6 @@ const SectionIcon = styled.div`
   color: #00F5FF;
 `;
 
-const GridContainer = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 40px;
-  margin-bottom: 40px;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-`;
-
 const SectionCard = styled.div<{ delay?: number }>`
   background: #181f36;
   border: 1px solid #232b4a;
@@ -535,6 +523,9 @@ const SectionCard = styled.div<{ delay?: number }>`
   padding: 24px;
   min-height: 300px;
   animation: ${contentFadeIn} 0.8s cubic-bezier(0.4,0,0.2,1) ${({ delay = 0 }) => 0.6 + delay * 0.1}s both;
+  position: relative;
+  z-index: 0;
+  
 `;
 
 
@@ -604,6 +595,9 @@ const CoinAmount = styled.div`
   font-size: 1rem;
 `;
 
+// Replace WalletAddressSection, WalletAddressValue, and CopyButton definitions and their usage in the homepage Wallet Summary section
+
+// 1. Update styled-components for overlay effect
 const WalletAddressSection = styled.div`
   margin-top: 10px;
   padding-top: 10px;
@@ -614,10 +608,7 @@ const WalletAddressSection = styled.div`
   color: #aaa;
   font-size: 0.85rem;
   position: relative;
-  
-  &:hover .copy-button {
-    opacity: 1;
-  }
+  width: 100%;
 `;
 
 const WalletAddressLabel = styled.span`
@@ -625,31 +616,46 @@ const WalletAddressLabel = styled.span`
   white-space: nowrap;
 `;
 
+// Update WalletAddressValueWrapper and CopyOverlayButton so overlay only covers the address
+const WalletAddressValueWrapper = styled.div`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  cursor: pointer;
+`;
+
 const WalletAddressValue = styled.span`
   font-family: 'Monospace', monospace;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
-  cursor: pointer;
+  z-index: 1;
+  padding-right: 60px;
 `;
 
-const CopyButton = styled.button`
-  background: #00F5FF;
-  color: #0A1226;
+// Update CopyOverlayButton to accept a prop for visibility
+const CopyOverlayButton = styled.button`
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(10, 18, 38, 0.45);
+  color: #00F5FF;
   border: none;
   border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  white-space: nowrap;
-  
-  &:hover {
-    background: #00D4DD;
-  }
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 12px;
+  width: calc(100% - 0px);
+  min-width: 60px;
+  max-width: 100%;
+  pointer-events: auto;
 `;
 
 const EmptyState = styled.div`
@@ -679,23 +685,6 @@ const EmptyStateSubtext = styled.div`
 `;
 
 const DisconnectMessage = styled.div`
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 245, 255, 0.9);
-  color: #0A1226;
-  padding: 12px 20px;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 0.9rem;
-  font-family: 'Liter', -apple-system, BlinkMacSystemFont, sans-serif;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 245, 255, 0.3);
-  backdrop-filter: blur(8px);
-`;
-
-const CopySuccessMessage = styled.div`
   position: fixed;
   top: 20px;
   left: 50%;
@@ -804,6 +793,73 @@ const AccordionInputContainer = styled.div`
   align-items: center;
 `;
 
+const TabContentScrollContainer = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  max-height: 440px;
+  min-height: 0;
+`;
+
+const walletSummaryFadeIn = keyframes`
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+`;
+
+const WalletSummaryDropdown = styled.div`
+  position: fixed;
+  top: 80px;
+  right: 40px;
+  z-index: 2000;
+  min-width: 260px;
+  max-width: 340px;
+  background: #20294a;
+  border: 1px solid #232b4a;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  padding: 20px;
+  animation: ${walletSummaryFadeIn} 0.25s cubic-bezier(0.4,0,0.2,1);
+`;
+
+const WalletSummaryBackdrop = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+  z-index: 1999;
+`;
+
+// SubSectionCard: for individual portfolios and strategies
+const SubSectionCard = styled.div<{ delay?: number }>`
+  background: #232b4a;
+  border: 1px solid #232b4a;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  animation: ${contentFadeIn} 0.7s cubic-bezier(0.4,0,0.2,1) ${({ delay = 0 }) => 0.6 + delay * 0.1}s both;
+  position: relative;
+  z-index: 0;
+  cursor: pointer;
+  transition: border 0.18s, box-shadow 0.18s;
+  &:hover, &:focus {
+    border: 2px solid #00F5FF;
+    box-shadow: 0 0 0 2px #00F5FF33;
+    outline: none;
+  }
+  &:active {
+    border: 2px solid #00CFFF;
+    box-shadow: 0 0 0 2px #00CFFF33;
+  }
+`;
+
 function App() {
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'wallet'>('wallet');
@@ -823,7 +879,6 @@ function App() {
   const [showMassaInput, setShowMassaInput] = useState(false);
   const [showLedgerInput, setShowLedgerInput] = useState(false);
   const [inputPrivateKey, setInputPrivateKey] = useState('');
-  const [inputError, setInputError] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnectingMassaStation, setIsConnectingMassaStation] = useState(false);
   const [availableAccounts, setAvailableAccounts] = useState<WalletAccount[]>([]);
@@ -844,8 +899,15 @@ function App() {
   
   const [showHomepage, setShowHomepage] = useState(false);
   const [showDisconnectMessage, setShowDisconnectMessage] = useState(false);
-  const [showCopyMessage, setShowCopyMessage] = useState(false);
-  const [accountConnected, setAccountConnected] = useState(false);
+  const [massaStationError, setMassaStationError] = useState('');
+  const [massaWalletError, setMassaWalletError] = useState('');
+  const [connectedWalletType, setConnectedWalletType] = useState<null | 'station' | 'privateKey'>(null);
+  const [copied, setCopied] = useState(false);
+  const [addressHovered, setAddressHovered] = useState(false);
+  // Add state for showing the wallet summary popover
+  const [showWalletSummary, setShowWalletSummary] = useState(false);
+  const walletBalanceRef = useRef<HTMLDivElement | null>(null);
+  const walletSummaryDropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!cachedMassaStationData?.wallet || !connectionListener.isListening) {
@@ -866,6 +928,7 @@ function App() {
             setSelectedWallet(null);
             setCurrentNetwork('');
             setShowAccountSelection(false);
+            setMassaStationError(''); // Clear error when connection fails
             return;
           }
         }
@@ -968,6 +1031,22 @@ function App() {
     return () => clearInterval(interval);
   }, [cachedMassaStationData, connectionListener.isListening, showAccountSelection]);
 
+  useEffect(() => {
+    if (!showWalletSummary) return;
+    function handleClickOutside(event: MouseEvent) {
+      const balanceNode = walletBalanceRef.current;
+      const dropdownNode = walletSummaryDropdownRef.current;
+      if (
+        balanceNode && !balanceNode.contains(event.target as Node) &&
+        dropdownNode && !dropdownNode.contains(event.target as Node)
+      ) {
+        setShowWalletSummary(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showWalletSummary]);
+
   const handleOpenModal = () => setShowModal(true);
   const handleCloseModal = () => {
     setShowModal(false);
@@ -978,7 +1057,8 @@ function App() {
     setShowMassaInput(false);
     setShowLedgerInput(false);
     setInputPrivateKey('');
-    setInputError('');
+    setMassaStationError(''); // Clear Massa Station error
+    setMassaWalletError(''); // Clear Massa Wallet error
     setCachedMassaStationData(null);
     setAvailableAccounts([]);
     setSelectedWallet(null);
@@ -988,15 +1068,19 @@ function App() {
   };
 
   const handleConnectMassaWallet = () => {
+    // Collapse other options first
     setShowLedgerInput(false);
-    setShowAccountSelection(false);
+    setShowAccountSelection(false); // Collapse Massa Station
+    setMassaStationError(''); // Reset Massa Station error
     setShowMassaInput((prev) => !prev);
-    setInputError('');
+    setMassaWalletError(''); // Clear Massa Wallet error
   };
 
   const handleConnectLedgerWallet = () => {
+    // Collapse other options first
     setShowMassaInput(false);
-    setShowAccountSelection(false);
+    setShowAccountSelection(false); // Collapse Massa Station
+    setMassaStationError(''); // Reset Massa Station error
     setShowLedgerInput((prev) => !prev);
   };
 
@@ -1014,12 +1098,12 @@ function App() {
       setSelectedWallet(cachedMassaStationData.wallet);
       setCurrentNetwork(cachedMassaStationData.network);
       setShowAccountSelection(true);
-      setInputError('');
+      setMassaStationError(''); // Clear Massa Station error
       return;
     }
 
     setIsConnectingMassaStation(true);
-    setInputError('');
+    setMassaStationError(''); // Clear Massa Station error
     setWalletState(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
@@ -1097,13 +1181,13 @@ function App() {
         setShowAccountSelection(true);
         setWalletState(prev => ({ ...prev, isLoading: false }));
       } else {
-        setInputError(result.error || 'Failed to connect to Massa Station');
+        setMassaStationError(result.error || 'Failed to connect to Massa Station');
         setWalletState(prev => ({ ...prev, isLoading: false, error: result.error || 'Connection failed' }));
       }
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to connect to Massa Station.';
-      setInputError(errorMessage);
+      setMassaStationError(errorMessage);
       setWalletState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
       console.error('Massa Station connection error:', err);
     } finally {
@@ -1115,7 +1199,7 @@ function App() {
     if (!selectedWallet) return;
     
     setIsConnectingMassaStation(true);
-    setInputError('');
+    setMassaStationError(''); // Clear Massa Station error
     
     try {
       const result = await connectWithAccount(selectedWallet, accountIndex);
@@ -1130,20 +1214,19 @@ function App() {
           error: null,
           address: result.address || ''
         });
-        
-        setAccountConnected(true);
+        setConnectedWalletType('station');
         
         setTimeout(() => {
           setShowHomepage(true);
-          setAccountConnected(false);
+          setShowWalletSummary(false);
         }, 1500);
       } else {
-        setInputError(result.error || 'Failed to connect with selected account');
+        setMassaStationError(result.error || 'Failed to connect with selected account');
       }
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to connect with selected account.';
-      setInputError(errorMessage);
+      setMassaStationError(errorMessage);
       console.error('Account selection error:', err);
     } finally {
       setIsConnectingMassaStation(false);
@@ -1175,6 +1258,9 @@ function App() {
     setSelectedWallet(null);
     setCurrentNetwork('');
     setShowAccountSelection(false);
+    setMassaStationError(''); // Clear Massa Station error
+    setMassaWalletError(''); // Clear Massa Wallet error
+    setConnectedWalletType(null);
     
     setTimeout(() => {
       setShowDisconnectMessage(false);
@@ -1184,10 +1270,10 @@ function App() {
   const handleCopyAddress = async () => {
     try {
       await navigator.clipboard.writeText(walletState.address);
-      setShowCopyMessage(true);
+      setCopied(true);
       setTimeout(() => {
-        setShowCopyMessage(false);
-      }, 1500);
+        setCopied(false);
+      }, 1000);
     } catch (err) {
       console.error('Failed to copy address:', err);
     }
@@ -1196,12 +1282,12 @@ function App() {
   const handleMassaInputSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputPrivateKey) {
-      setInputError('Private key is required.');
+      setMassaWalletError('Private key is required.');
       return;
     }
     
     setIsConnecting(true);
-    setInputError('');
+    setMassaWalletError(''); // Clear Massa Wallet error
     setWalletState(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
@@ -1217,21 +1303,22 @@ function App() {
           error: null,
           address: result.address || ''
         });
-        
+        setConnectedWalletType('privateKey');
         setInputPrivateKey('');
-        setInputError('');
+        setMassaWalletError(''); // Clear Massa Wallet error
         
         setTimeout(() => {
           setShowHomepage(true);
+          setShowWalletSummary(false);
         }, 1500);
       } else {
-        setInputError(result.error || 'Failed to connect wallet');
+        setMassaWalletError(result.error || 'Failed to connect wallet');
         setWalletState(prev => ({ ...prev, isLoading: false, error: result.error || 'Connection failed' }));
       }
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to connect to Massa buildnet.';
-      setInputError(errorMessage);
+      setMassaWalletError(errorMessage);
       setWalletState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
       console.error('Massa connection error:', err);
     } finally {
@@ -1247,35 +1334,126 @@ function App() {
           Wallet disconnected successfully
         </DisconnectMessage>
       )}
-      {showCopyMessage && (
-        <CopySuccessMessage>
-          Address copied to clipboard
-        </CopySuccessMessage>
-      )}
       {showHomepage ? (
         <HomepageContainer>
           <Header>
             <HeaderLogo src={OdinLogoH} alt="Odin Logo" />
-            <HeaderWalletInfo>
-              <WalletBalance>{parseFloat(walletState.balance || '0').toFixed(2)} MAS</WalletBalance>
-              <DisconnectButton onClick={handleDisconnectWallet}>
+            <HeaderWalletInfo style={{ position: 'relative' }}>
+              <WalletBalance
+                ref={walletBalanceRef}
+                onClick={() => setShowWalletSummary(v => !v)}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+                tabIndex={0}
+                title="Show wallet summary"
+              >
+                {currentNetwork ? (
+                  <span
+                    style={{
+                      color: '#0A1226',
+                      background: 'transparent',
+                      border: '1.5px solid #0A1226',
+                      fontWeight: 700,
+                      marginRight: 8,
+                      fontSize: '0.95em',
+                      letterSpacing: '0.02em',
+                      borderRadius: '8px',
+                      padding: '2px 10px',
+                      display: 'inline-block',
+                      textTransform: 'lowercase',
+                    }}
+                  >
+                    {currentNetwork}
+                  </span>
+                ) : null}
+                {parseFloat(walletState.balance || '0').toFixed(2)} MAS
+              </WalletBalance>
+              {showWalletSummary && (
+                <>
+                  <WalletSummaryBackdrop onClick={() => setShowWalletSummary(false)} />
+                  <WalletSummaryDropdown ref={walletSummaryDropdownRef} onClick={e => e.stopPropagation()}>
+                    <WalletSummary style={{ marginBottom: 0 }}>
+                      <CoinBalance>
+                        <CoinInfo>
+                          <CoinIcon $isImage={true}>
+                            <img src={MassaLogo} alt="Massa" />
+                          </CoinIcon>
+                          <CoinDetails>
+                            <CoinName>Massa</CoinName>
+                            <CoinSymbol>MAS</CoinSymbol>
+                          </CoinDetails>
+                        </CoinInfo>
+                        <CoinAmount>{parseFloat(walletState.balance || '0').toFixed(2)}</CoinAmount>
+                      </CoinBalance>
+                      {walletState.address && (
+                        <WalletAddressSection>
+                          <WalletAddressLabel>Address:</WalletAddressLabel>
+                          <WalletAddressValueWrapper
+                            onClick={handleCopyAddress}
+                            title="Copy address to clipboard"
+                            tabIndex={0}
+                            role="button"
+                            style={{ outline: 'none' }}
+                            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleCopyAddress(); }}
+                            onMouseEnter={() => setAddressHovered(true)}
+                            onMouseLeave={() => setAddressHovered(false)}
+                            onFocus={() => setAddressHovered(true)}
+                            onBlur={() => setAddressHovered(false)}
+                          >
+                            <WalletAddressValue>{walletState.address}</WalletAddressValue>
+                            {(addressHovered || copied) && (
+                              <CopyOverlayButton type="button">{copied ? 'Copied' : 'Copy'}</CopyOverlayButton>
+                            )}
+                          </WalletAddressValueWrapper>
+                        </WalletAddressSection>
+                      )}
+                      <DisconnectButton style={{ marginTop: 18, width: '100%' }} onClick={handleDisconnectWallet}>
                 Disconnect
               </DisconnectButton>
+                    </WalletSummary>
+                  </WalletSummaryDropdown>
+                </>
+              )}
             </HeaderWalletInfo>
           </Header>
           
           <MainContent>
-            <GridContainer>
-              <SectionCard delay={0}>
-                <SectionTitle>
+            {/* Full-width SectionCard for Trading Portfolios */}
+            <div style={{ display: 'flex', gap: 32, width: '100%', alignItems: 'flex-start' }}>
+              <SectionCard delay={0} style={{ flex: 2, maxWidth: '100%', marginBottom: 40, boxSizing: 'border-box' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                  <SectionTitle style={{ marginRight: 24, flex: 1, display: 'flex', alignItems: 'center' }}>
                   <SectionIcon>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M3 3v18h18"/>
                       <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
                     </svg>
                   </SectionIcon>
-                  Trading Portfolios & Active Strategies
+                    Trading Portfolios
                 </SectionTitle>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <button
+                      style={{
+                        background: '#00F5FF',
+                        color: '#0A1226',
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '10px 18px',
+                        fontWeight: 700,
+                        fontFamily: 'Inter, sans-serif',
+                        fontSize: '1rem',
+                        cursor: 'pointer',
+                        transition: 'background 0.18s, color 0.18s, box-shadow 0.18s',
+                        boxShadow: '0 2px 12px #00F5FF22',
+                      }}
+                    >
+                      New
+                    </button>
+                  </div>
+                </div>
+                {(() => {
+                  const hasPortfolio = true; // Set to true if there are portfolios, false otherwise
+                  if (!hasPortfolio) {
+                    return (
                 <EmptyState>
                   <EmptyStateIcon>
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1283,43 +1461,137 @@ function App() {
                       <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
                     </svg>
                   </EmptyStateIcon>
-                  <EmptyStateText>No Active Strategies</EmptyStateText>
-                  <EmptyStateSubtext>Your trading portfolios and strategies will appear here</EmptyStateSubtext>
+                        <EmptyStateText>No Portfolios</EmptyStateText>
+                        <EmptyStateSubtext>Your trading portfolios will appear here</EmptyStateSubtext>
                 </EmptyState>
+                    );
+                  }
+                  return null;
+                })()}
+                {/* Action Buttons */}
+                {/* Portfolio 1 Card */}
+                <SubSectionCard delay={0.1}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 18 }}>
+                    <div style={{ fontWeight: 700, fontSize: '1.15rem', color: '#00F5FF', marginRight: 12 }}>Portfolio 1</div>
+                    <span style={{ background: '#FFD700', color: '#0A1226', fontWeight: 700, fontSize: '0.92rem', borderRadius: 16, padding: '4px 14px', marginLeft: 0, display: 'inline-block', letterSpacing: '0.01em' }}>Multi-thread Attention</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 32, marginBottom: 18 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#aaa', fontSize: '0.98rem', fontWeight: 600, marginBottom: 4 }}>NET LIQUIDATION VALUE</div>
+                      <div style={{ fontWeight: 800, fontSize: '2.1rem', color: '#fff', letterSpacing: '-1px' }}>200.00 MAS</div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#aaa', fontSize: '0.98rem', fontWeight: 600, marginBottom: 4 }}>DAILY P&L</div>
+                      <div style={{ fontWeight: 800, fontSize: '2.1rem', color: '#10B981', letterSpacing: '-1px' }}>+32.50 MAS</div>
+                      <div style={{ color: '#10B981', fontWeight: 600, fontSize: '1.05rem', marginTop: 2 }}>(+2.78%)</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 24, marginBottom: 10 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#aaa', fontSize: '0.78rem', fontWeight: 600, marginBottom: 2 }}>UNREALISED P&L</div>
+                      <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.05rem' }}>+12.00 MAS</div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#aaa', fontSize: '0.78rem', fontWeight: 600, marginBottom: 2 }}>MKT VAL</div>
+                      <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.05rem' }}>180.00 MAS</div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#aaa', fontSize: '0.78rem', fontWeight: 600, marginBottom: 2 }}>CASH</div>
+                      <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.05rem' }}>20.00 MAS</div>
+                    </div>
+                  </div>
+                </SubSectionCard>
+                {/* Portfolio 2 Card */}
+                <SubSectionCard delay={0.15}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 18 }}>
+                    <div style={{ fontWeight: 700, fontSize: '1.15rem', color: '#00F5FF', marginRight: 12 }}>Portfolio 2</div>
+                    <span style={{ background: '#FFD700', color: '#0A1226', fontWeight: 700, fontSize: '0.92rem', borderRadius: 16, padding: '4px 14px', marginLeft: 0, display: 'inline-block', letterSpacing: '0.01em' }}>Multi-thread Attention</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 32, marginBottom: 18 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#aaa', fontSize: '0.98rem', fontWeight: 600, marginBottom: 4 }}>NET LIQUIDATION VALUE</div>
+                      <div style={{ fontWeight: 800, fontSize: '2.1rem', color: '#fff', letterSpacing: '-1px' }}>100.00 MAS</div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#aaa', fontSize: '0.98rem', fontWeight: 600, marginBottom: 4 }}>DAILY P&L</div>
+                      <div style={{ fontWeight: 800, fontSize: '2.1rem', color: '#10B981', letterSpacing: '-1px' }}>+120.00 MAS</div>
+                      <div style={{ color: '#10B981', fontWeight: 600, fontSize: '1.05rem', marginTop: 2 }}>(+5.04%)</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 24, marginBottom: 10 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#aaa', fontSize: '0.78rem', fontWeight: 600, marginBottom: 2 }}>UNREALISED P&L</div>
+                      <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.05rem' }}>+30.00 MAS</div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#aaa', fontSize: '0.78rem', fontWeight: 600, marginBottom: 2 }}>MKT VAL</div>
+                      <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.05rem' }}>80.00 MAS</div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#aaa', fontSize: '0.78rem', fontWeight: 600, marginBottom: 2 }}>CASH</div>
+                      <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.05rem' }}>20.00 MAS</div>
+                    </div>
+                  </div>
+                </SubSectionCard>
               </SectionCard>
-              
-              <SectionCard delay={1}>
-                <SectionTitle>
-                  <SectionIcon>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
-                  </SectionIcon>
-                  Wallet Summary
-                </SectionTitle>
-                <WalletSummary>
-                  <CoinBalance>
-                    <CoinInfo>
-                      <CoinIcon $isImage={true}>
-                        <img src={MassaLogo} alt="Massa" />
-                      </CoinIcon>
-                      <CoinDetails>
-                        <CoinName>Massa</CoinName>
-                        <CoinSymbol>MAS</CoinSymbol>
-                      </CoinDetails>
-                    </CoinInfo>
-                    <CoinAmount>{parseFloat(walletState.balance || '0').toFixed(2)}</CoinAmount>
-                  </CoinBalance>
-                  {walletState.address && (
-                    <WalletAddressSection>
-                      <WalletAddressLabel>Address:</WalletAddressLabel>
-                      <WalletAddressValue>{walletState.address}</WalletAddressValue>
-                      <CopyButton className="copy-button" onClick={handleCopyAddress}>Copy</CopyButton>
-                    </WalletAddressSection>
-                  )}
-                </WalletSummary>
+              {/* Strategies Card */}
+              <SectionCard delay={0.2} style={{ flex: 1, minWidth: 280, maxWidth: 340, alignSelf: 'flex-start', boxSizing: 'border-box' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <SectionTitle style={{ marginRight: 16, flex: 1, display: 'flex', alignItems: 'center' }}>
+                    <SectionIcon>
+                      {/* Classic light bulb icon for strategy */}
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 18h6" />
+                        <path d="M10 22h4" />
+                        <path d="M12 2a7 7 0 0 0-7 7c0 3.5 2.5 6.5 6 7v2h2v-2c3.5-0.5 6-3.5 6-7a7 7 0 0 0-7-7z" />
+                      </svg>
+                    </SectionIcon>
+                    Strategies
+                  </SectionTitle>
+                  <button
+                    style={{
+                      background: '#00F5FF',
+                      color: '#0A1226',
+                      border: 'none',
+                      borderRadius: 8,
+                      padding: '10px 18px',
+                      fontWeight: 700,
+                      fontFamily: 'Inter, sans-serif',
+                      fontSize: '1rem',
+                      cursor: 'pointer',
+                      transition: 'background 0.18s, color 0.18s, box-shadow 0.18s',
+                      boxShadow: '0 2px 12px #00F5FF22',
+                    }}
+                  >
+                    New
+                  </button>
+                </div>
+                {/* Active Strategies */}
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ color: '#10B981', fontWeight: 600, fontSize: '0.98rem', marginBottom: 8 }}>Active Strategies</div>
+                  <SubSectionCard delay={0.2} style={{ background: '#20294a' }}>
+                    <div style={{ color: '#FFD700', fontWeight: 600, fontSize: '0.97rem', marginBottom: 4 }}>
+                      Multi-threaded Attention
+                    </div>
+                    <div style={{ color: '#aaa', fontSize: '0.88rem' }}>
+                      Portfolios: <span style={{ color: '#00F5FF', fontWeight: 600 }}>Portfolio 1</span>
+                    </div>
+                  </SubSectionCard>
+                </div>
+                {/* Inactive Strategies */}
+                <div>
+                  <div style={{ color: '#aaa', fontWeight: 600, fontSize: '0.98rem', marginBottom: 8 }}>Inactive Strategies</div>
+                  <SubSectionCard delay={0.25}>
+                    <div style={{ color: '#aaa', fontWeight: 500, fontSize: '0.97rem', marginBottom: 4 }}>
+                      Mean Reversion
+                    </div>
+                    <div style={{ color: '#aaa', fontSize: '0.88rem' }}>
+                      Portfolios: <span style={{ color: '#aaa', fontWeight: 600 }}>None</span>
+                    </div>
+                  </SubSectionCard>
+                </div>
               </SectionCard>
-            </GridContainer>
+            </div>
           </MainContent>
         </HomepageContainer>
       ) : (
@@ -1341,25 +1613,196 @@ function App() {
                 <Tab active={activeTab === 'wallet'} onClick={() => setActiveTab('wallet')}>Connect Wallets</Tab>
                   <Tab active={activeTab === 'login'} onClick={() => setActiveTab('login')}>Login</Tab>
               </TabsContainer>
-              <SlidingTabsContainer activeTab={activeTab}>
-                <SlidingTabsInner activeTab={activeTab}>
-                  <SlidingTabContent>
-                    <WalletsList>
-                      <WalletOption expanded={showAccountSelection} onClick={handleConnectMassaStation} style={{ flexDirection: 'column', alignItems: 'stretch', paddingBottom: showAccountSelection ? 0 : undefined }}>
-                        <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                          <WalletIcon>
-                            <svg width="28" height="28" viewBox="0 0 48 48"><circle cx="24" cy="24" r="21" fill="#1AE19D" /></svg>
-                          </WalletIcon>
-                          <WalletInfo>
+              <TabContentScrollContainer>
+                <SlidingTabsContainer activeTab={activeTab}>
+                  <SlidingTabsInner activeTab={activeTab}>
+                    <SlidingTabContent>
+                      <WalletsList>
+                        <WalletOption 
+                          expanded={showAccountSelection || (!!massaStationError && !isConnectingMassaStation)} 
+                          onClick={handleConnectMassaStation} 
+                          style={{ flexDirection: 'column', alignItems: 'stretch', paddingBottom: (showAccountSelection || (!!massaStationError && !isConnectingMassaStation)) ? 0 : undefined }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                            <WalletIcon>
+                              <svg width="28" height="28" viewBox="0 0 48 48"><circle cx="24" cy="24" r="21" fill="#1AE19D" /></svg>
+                            </WalletIcon>
+                            <WalletInfo>
+                              <WalletName>
+                                {isConnectingMassaStation ? 'Connecting...' : 'Massa Station'}
+                              </WalletName>
+                              <WalletDesc>
+                                {isConnectingMassaStation ? 'Please wait...' : 'Connect with Massa Station extension'}
+                              </WalletDesc>
+                            </WalletInfo>
+                            <WalletArrow>
+                              <img 
+                                src={ExpandArrow} 
+                                alt="expand" 
+                                style={{ 
+                                  width: '16px', 
+                                  height: '16px',
+                                  transform: (showAccountSelection || (!!massaStationError && !isConnectingMassaStation)) ? 'rotate(180deg)' : 'rotate(90deg)',
+                                  transition: 'transform 0.2s ease',
+                                  filter: 'invert(85%) sepia(100%) saturate(1000%) hue-rotate(180deg)'
+                                }} 
+                              />
+                            </WalletArrow>
+                          </div>
+                          {(showAccountSelection || (!!massaStationError && !isConnectingMassaStation)) && (
+                            <AccordionInputContainer onClick={e => e.stopPropagation()}>
+                              {/* Error message only in expanded section */}
+                              {massaStationError && !isConnectingMassaStation && (
+                                <div style={{ 
+                                  color: '#FFD700', 
+                                  fontSize: '0.85rem', 
+                                  marginTop: 4,
+                                  width: '100%',
+                                  overflowWrap: 'break-word',
+                                  wordBreak: 'break-all',
+                                  textOverflow: 'ellipsis',
+                                  textAlign: 'left',
+                                  whiteSpace: 'normal',
+                                  background: 'rgba(255,255,0,0.05)',
+                                  borderRadius: 4,
+                                  padding: '4px 6px',
+                                  marginBottom: 10,
+                                  maxWidth: '100%'
+                                }}>
+                                  Error: {massaStationError}
+                                </div>
+                              )}
+                              {/* Only show account selection UI if showAccountSelection is true and not showing error */}
+                              {showAccountSelection && !massaStationError && (
+                                <div style={{ 
+                                  width: 'calc(100% - 40px)', 
+                                  display: 'flex', 
+                                  flexDirection: 'column', 
+                                  alignItems: 'flex-start', 
+                                  paddingBottom: '20px',
+                                  maxWidth: 'calc(100% - 40px)',
+                                  overflow: 'hidden',
+                                  margin: '0 auto'
+                                }}>
+                                  <div style={{ 
+                                    color: '#aaa', 
+                                    fontSize: '0.9rem', 
+                                    marginBottom: '12px',
+                                    fontWeight: '500',
+                                    textAlign: 'left',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    width: '100%'
+                                  }}>
+                                    <span>Select an account to connect:</span>
+                                    <span style={{ 
+                                      color: '#00F5FF', 
+                                      fontWeight: '600'
+                                    }}>
+                                      {currentNetwork || ''}
+                                    </span>
+                                  </div>
+                                  {availableAccounts.map((account, index) => {
+                                    const address = account.address;
+                                    const abbreviatedAddress = address.length > 9 
+                                      ? `${address.substring(0, 6)}...${address.substring(address.length - 3)}`
+                                      : address;
+                                    
+                                    return (
+                                      <div
+                                        key={account.address}
+                                        onClick={() => handleSelectAccount(index)}
+                                        style={{
+                                          width: 'calc(100% - 34px)',
+                                          padding: '8px 15px',
+                                          marginBottom: '6px',
+                                          backgroundColor: '#1a2337',
+                                          borderRadius: '6px',
+                                          cursor: 'pointer',
+                                          border: '1px solid #232b4a',
+                                          transition: 'all 0.2s ease',
+                                          display: 'flex',
+                                          justifyContent: 'space-between',
+                                          alignItems: 'center',
+                                          minHeight: '40px',
+                                          overflow: 'auto'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                          e.currentTarget.style.backgroundColor = '#232b4a';
+                                          e.currentTarget.style.borderColor = '#00F5FF';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          e.currentTarget.style.backgroundColor = '#1a2337';
+                                          e.currentTarget.style.borderColor = '#232b4a';
+                                        }}
+                                      >
+                                        <div style={{ 
+                                          display: 'flex',
+                                          flexDirection: 'column',
+                                          alignItems: 'flex-start',
+                                          flex: 1,
+                                          minWidth: 0,
+                                          marginRight: '8px',
+                                          overflow: 'hidden'
+                                        }}>
+                                          <div style={{ 
+                                            color: '#fff', 
+                                            fontSize: '0.85rem', 
+                                            fontWeight: '500',
+                                            marginBottom: '2px',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            maxWidth: '100%'
+                                          }}>
+                                            {account.name}
+                                          </div>
+                                          <div style={{ 
+                                            color: '#aaa', 
+                                            fontSize: '0.7rem',
+                                            fontFamily: 'Monospace, monospace',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            maxWidth: '100%'
+                                          }}>
+                                            ({abbreviatedAddress})
+                                          </div>
+                                        </div>
+                                        <div style={{ 
+                                          color: '#00F5FF', 
+                                          fontSize: '0.85rem',
+                                          fontWeight: '500',
+                                          whiteSpace: 'nowrap',
+                                          flexShrink: 0
+                                        }}>
+                                          {parseFloat(account.balance || '0').toFixed(2)} MAS
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </AccordionInputContainer>
+                          )}
+                        </WalletOption>
+                        <WalletOption expanded={showMassaInput} onClick={handleConnectMassaWallet} style={{ flexDirection: 'column', alignItems: 'stretch', paddingBottom: showMassaInput ? 0 : undefined }}>
+                          <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                            <WalletIcon>
+                            <svg width="25px" height="25px" viewBox="0 0 0.5 0.5"><path fill="#00F5FF" d="M0.25 0.039a0.063 0.063 0 0 0 -0.055 0.031L0.214 0.083 0.195 0.071 0.017 0.363a0.063 0.063 0 0 0 0.023 0.088q0.014 0.009 0.032 0.009h0.355A0.063 0.063 0 0 0 0.484 0.428a0.063 0.063 0 0 0 0 -0.065L0.306 0.071A0.063 0.063 0 0 0 0.25 0.039"/></svg>
+                            </WalletIcon>
+                                                    <WalletInfo>
                             <WalletName>
-                              {isConnectingMassaStation ? 'Connecting...' : 'Massa Station'}
+                              {isConnecting ? 'Connecting...' : 
+                               (connectedWalletType === 'privateKey' && walletState.isConnected) ? 'Connected to Buildnet' : 'Massa Wallet'}
                             </WalletName>
                             <WalletDesc>
-                              {isConnectingMassaStation ? 'Please wait...' : 'Connect with Massa Station extension'}
+                              {isConnecting ? 'Please wait...' : 'Connect to buildnet with private key'}
                             </WalletDesc>
-                            {inputError && !isConnectingMassaStation && (
+                            {(connectedWalletType === 'privateKey' && walletState.isConnected) && (
                               <div style={{ 
-                                color: '#FFD700', 
+                                color: '#00F5FF', 
                                 fontSize: '0.85rem', 
                                 marginTop: 4,
                                 width: '100%',
@@ -1368,9 +1811,84 @@ function App() {
                                 textAlign: 'left',
                                 whiteSpace: 'nowrap'
                               }}>
-                                Error: {inputError}
+                                {walletState.balance} MAS
                               </div>
                             )}
+                          </WalletInfo>
+                            <WalletArrow>
+                              <img 
+                                src={ExpandArrow} 
+                                alt="expand" 
+                                style={{ 
+                                  width: '16px', 
+                                  height: '16px',
+                                  transform: showMassaInput ? 'rotate(180deg)' : 'rotate(90deg)',
+                                  transition: 'transform 0.2s ease',
+                                  filter: 'invert(85%) sepia(100%) saturate(1000%) hue-rotate(180deg)'
+                                }} 
+                              />
+                            </WalletArrow>
+                          </div>
+                          {showMassaInput && (
+                            <AccordionInputContainer onClick={e => e.stopPropagation()}>
+                              {walletState.isConnected ? (
+                                <div style={{ 
+                                  width: '100%', 
+                                  display: 'flex', 
+                                  flexDirection: 'column', 
+                                  alignItems: 'center', 
+                                  paddingLeft: '20px', 
+                                  paddingRight: '20px',
+                                  paddingBottom: '20px'
+                                }}>
+                                  <div style={{ 
+                                    color: '#10B981', 
+                                    fontSize: '1.1rem', 
+                                    fontWeight: '600',
+                                    textAlign: 'center',
+                                    marginBottom: '10px'
+                                  }}>
+                                    ✓ Wallet Connected Successfully
+                                  </div>
+                                  <div style={{ 
+                                    color: '#aaa', 
+                                    fontSize: '0.9rem', 
+                                    textAlign: 'center',
+                                    lineHeight: '1.4'
+                                  }}>
+                                    Redirecting to homepage...
+                                  </div>
+                                </div>
+                              ) : (
+                              <form onSubmit={handleMassaInputSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', paddingLeft: '20px', paddingRight: '20px' }}>
+                                <PasswordInput
+                                  placeholder="Private Key (S1...)"
+                                  value={inputPrivateKey}
+                                  onChange={e => setInputPrivateKey(e.target.value)}
+                                  style={{ marginBottom: 16, width: '100%', fontSize: '0.85rem' }}
+                                />
+                                {/* Error message only in expanded section */}
+                                {massaWalletError && <div style={{ color: '#FFD700', marginBottom: 10, width: '100%', overflowWrap: 'break-word', wordBreak: 'break-all', whiteSpace: 'normal', background: 'rgba(255,255,0,0.05)', borderRadius: 4, padding: '4px 6px', fontSize: '0.85rem' }}>{massaWalletError}</div>}
+                                <FormLoginButton 
+                                  type="submit" 
+                                  style={{ marginTop: 8, width: '100%' }}
+                                  disabled={isConnecting}
+                                >
+                                  {isConnecting ? 'Connecting...' : 'Connect'}
+                                </FormLoginButton>
+                              </form>
+                              )}
+                            </AccordionInputContainer>
+                          )}
+                        </WalletOption>
+                          <WalletOption expanded={showLedgerInput} onClick={handleConnectLedgerWallet} style={{ flexDirection: 'column', alignItems: 'stretch', paddingBottom: showLedgerInput ? 0 : undefined }}>
+                            <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                          <WalletIcon>
+                            <svg width="28" height="28" viewBox="0 0 48 48"><rect x="8" y="8" width="35" height="35" rx="8" fill="#FFD700" /></svg>
+                          </WalletIcon>
+                          <WalletInfo>
+                            <WalletName>Ledger</WalletName>
+                            <WalletDesc>Hardware wallet</WalletDesc>
                           </WalletInfo>
                           <WalletArrow>
                             <img 
@@ -1379,375 +1897,102 @@ function App() {
                               style={{ 
                                 width: '16px', 
                                 height: '16px',
-                                transform: showAccountSelection ? 'rotate(180deg)' : 'rotate(90deg)',
+                                    transform: showLedgerInput ? 'rotate(180deg)' : 'rotate(90deg)',
                                 transition: 'transform 0.2s ease',
                                 filter: 'invert(85%) sepia(100%) saturate(1000%) hue-rotate(180deg)'
                               }} 
                             />
                           </WalletArrow>
-                        </div>
-                        {showAccountSelection && (
-                          <AccordionInputContainer onClick={e => e.stopPropagation()}>
-                            {accountConnected ? (
-                              <div style={{ 
-                                width: '100%', 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                alignItems: 'center', 
-                                paddingLeft: '20px', 
-                                paddingRight: '20px',
-                                paddingBottom: '20px'
-                              }}>
+                            </div>
+                            {showLedgerInput && (
+                              <AccordionInputContainer onClick={e => e.stopPropagation()}>
                                 <div style={{ 
-                                  color: '#10B981', 
-                                  fontSize: '1.1rem', 
-                                  fontWeight: '600',
-                                  textAlign: 'center',
-                                  marginBottom: '10px'
+                                  width: '100%', 
+                                  display: 'flex', 
+                                  flexDirection: 'column', 
+                                  alignItems: 'center', 
+                                  paddingLeft: '20px', 
+                                  paddingRight: '20px',
+                                  paddingBottom: '20px'
                                 }}>
-                                  ✓ Connected Successfully
-                                </div>
-                                <div style={{ 
-                                  color: '#aaa', 
-                                  fontSize: '0.9rem', 
-                                  textAlign: 'center',
-                                  lineHeight: '1.4'
-                                }}>
-                                  Redirecting to homepage...
-                                </div>
-                              </div>
-                            ) : (
-                            <div style={{ 
-                              width: 'calc(100% - 40px)', 
-                              display: 'flex', 
-                              flexDirection: 'column', 
-                              alignItems: 'flex-start', 
-                              paddingBottom: '20px',
-                              maxWidth: 'calc(100% - 40px)',
-                              overflow: 'hidden',
-                              margin: '0 auto'
-                            }}>
-                              <div style={{ 
-                                color: '#aaa', 
-                                fontSize: '0.9rem', 
-                                marginBottom: '12px',
-                                fontWeight: '500',
-                                textAlign: 'left',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                width: '100%'
-                              }}>
-                                <span>Select an account to connect:</span>
-                                <span style={{ 
-                                  color: '#00F5FF', 
-                                  fontWeight: '600'
-                                }}>
-                                  {currentNetwork || ''}
-                                </span>
-                              </div>
-                              {availableAccounts.map((account, index) => {
-                                const address = account.address;
-                                const abbreviatedAddress = address.length > 9 
-                                  ? `${address.substring(0, 6)}...${address.substring(address.length - 3)}`
-                                  : address;
-                                
-                                return (
-                                  <div
-                                    key={account.address}
-                                    onClick={() => handleSelectAccount(index)}
-                                    style={{
-                                      width: 'calc(100% - 34px)',
-                                      padding: '8px 15px',
-                                      marginBottom: '6px',
-                                      backgroundColor: '#1a2337',
-                                      borderRadius: '6px',
-                                      cursor: 'pointer',
-                                      border: '1px solid #232b4a',
-                                      transition: 'all 0.2s ease',
-                                      display: 'flex',
-                                      justifyContent: 'space-between',
-                                      alignItems: 'center',
-                                      minHeight: '40px',
-                                      overflow: 'auto'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      e.currentTarget.style.backgroundColor = '#232b4a';
-                                      e.currentTarget.style.borderColor = '#00F5FF';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.currentTarget.style.backgroundColor = '#1a2337';
-                                      e.currentTarget.style.borderColor = '#232b4a';
-                                    }}
-                                  >
-                                    <div style={{ 
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      alignItems: 'flex-start',
-                                      flex: 1,
-                                      minWidth: 0,
-                                      marginRight: '8px',
-                                      overflow: 'hidden'
-                                    }}>
-                                      <div style={{ 
-                                        color: '#fff', 
-                                        fontSize: '0.85rem', 
-                                        fontWeight: '500',
-                                        marginBottom: '2px',
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        maxWidth: '100%'
-                                      }}>
-                                        {account.name}
-                                      </div>
-                                      <div style={{ 
-                                        color: '#aaa', 
-                                        fontSize: '0.7rem',
-                                        fontFamily: 'Monospace, monospace',
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        maxWidth: '100%'
-                                      }}>
-                                        ({abbreviatedAddress})
-                                      </div>
-                                    </div>
-                                    <div style={{ 
-                                      color: '#00F5FF', 
-                                      fontSize: '0.85rem',
-                                      fontWeight: '500',
-                                      whiteSpace: 'nowrap',
-                                      flexShrink: 0
-                                    }}>
-                                      {parseFloat(account.balance || '0').toFixed(2)} MAS
-                                    </div>
+                                  <div style={{ 
+                                    color: '#FFD700', 
+                                    fontSize: '1.1rem', 
+                                    fontWeight: '600',
+                                    textAlign: 'center',
+                                    marginBottom: '10px'
+                                  }}>
+                                    COMING SOON
                                   </div>
-                                );
-                              })}
-                            </div>
+                                  <div style={{ 
+                                    color: '#aaa', 
+                                    fontSize: '0.9rem', 
+                                    textAlign: 'center',
+                                    lineHeight: '1.4'
+                                  }}>
+                                    Ledger hardware wallet integration will be available in a future update.
+                                  </div>
+                                </div>
+                              </AccordionInputContainer>
                             )}
-                          </AccordionInputContainer>
-                        )}
-                      </WalletOption>
-                      <WalletOption expanded={showMassaInput} onClick={handleConnectMassaWallet} style={{ flexDirection: 'column', alignItems: 'stretch', paddingBottom: showMassaInput ? 0 : undefined }}>
-                        <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                          <WalletIcon>
-                          <svg width="25px" height="25px" viewBox="0 0 0.5 0.5"><path fill="#00F5FF" d="M0.25 0.039a0.063 0.063 0 0 0 -0.055 0.031L0.214 0.083 0.195 0.071 0.017 0.363a0.063 0.063 0 0 0 0.023 0.088q0.014 0.009 0.032 0.009h0.355A0.063 0.063 0 0 0 0.484 0.428a0.063 0.063 0 0 0 0 -0.065L0.306 0.071A0.063 0.063 0 0 0 0.25 0.039"/></svg>
-                          </WalletIcon>
-                                                  <WalletInfo>
-                          <WalletName>
-                            {isConnecting ? 'Connecting...' : 
-                             walletState.isConnected ? 'Connected to Buildnet' : 'Massa Wallet'}
-                          </WalletName>
-                          <WalletDesc>
-                            {isConnecting ? 'Please wait...' : 'Connect to buildnet with private key'}
-                          </WalletDesc>
-                          {walletState.isConnected && (
-                            <div style={{ 
-                              color: '#00F5FF', 
-                              fontSize: '0.85rem', 
-                              marginTop: 4,
-                              width: '100%',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              textAlign: 'left',
-                              whiteSpace: 'nowrap'
-                            }}>
-                              {walletState.balance} MAS
-                            </div>
-                          )}
-                          {inputError && (
+                        </WalletOption>
+                      </WalletsList>
+                    </SlidingTabContent>
+                      <SlidingTabContent>
+                        <LoginTabContent>
+                          <LoginButton variant="google" style={{ margin: '12px 0', opacity: 1, animation: 'none', width: '100%' }}>
+                            <LoginIcon variant="google">
+                              <svg width="22" height="22" viewBox="0 0 48 48">
+                                <g>
+                                  <path className="google-g" d="M43.611 20.083H42V20H24v8h11.303C33.978 32.833 29.418 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c2.438 0 4.7.751 6.573 2.037l6.418-6.418C33.684 5.084 29.084 3 24 3 12.954 3 4 11.954 4 23s8.954 20 20 20c11.046 0 20-8.954 20-20 0-1.341-.138-2.651-.389-3.917z"/>
+                                </g>
+                              </svg>
+                            </LoginIcon>
+                            Login with Google
+                          </LoginButton>
+                          <OrDivider>or</OrDivider>
+                          <form style={{ width: '100%', maxWidth: '100%', marginTop: 10, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <EmailInput
+                              type="email"
+                              placeholder="Email address"
+                              value={email}
+                              onChange={e => setEmail(e.target.value)}
+                            />
+                            <PasswordInput
+                              placeholder="Password"
+                              value={password}
+                              onChange={e => setPassword(e.target.value)}
+                            />
+                            <ForgotLink href="#">Forgot password?</ForgotLink>
+                            <FormLoginButton type="submit">Login</FormLoginButton>
+                          </form>
+                          <ComingSoonOverlay>
                             <div style={{ 
                               color: '#FFD700', 
-                              fontSize: '0.85rem', 
-                              marginTop: 4,
-                              width: '100%',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              textAlign: 'left',
-                              whiteSpace: 'nowrap'
+                              fontSize: '1.3rem', 
+                              fontWeight: '700',
+                              textAlign: 'center',
+                              marginBottom: '8px',
+                              textTransform: 'uppercase',
+                              letterSpacing: '1px'
                             }}>
-                              Error: {inputError}
+                              Coming Soon
                             </div>
-                          )}
-                        </WalletInfo>
-                          <WalletArrow>
-                            <img 
-                              src={ExpandArrow} 
-                              alt="expand" 
-                              style={{ 
-                                width: '16px', 
-                                height: '16px',
-                                transform: showMassaInput ? 'rotate(180deg)' : 'rotate(90deg)',
-                                transition: 'transform 0.2s ease',
-                                filter: 'invert(85%) sepia(100%) saturate(1000%) hue-rotate(180deg)'
-                              }} 
-                            />
-                          </WalletArrow>
-                        </div>
-                        {showMassaInput && (
-                          <AccordionInputContainer onClick={e => e.stopPropagation()}>
-                            {walletState.isConnected ? (
-                              <div style={{ 
-                                width: '100%', 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                alignItems: 'center', 
-                                paddingLeft: '20px', 
-                                paddingRight: '20px',
-                                paddingBottom: '20px'
-                              }}>
-                                <div style={{ 
-                                  color: '#10B981', 
-                                  fontSize: '1.1rem', 
-                                  fontWeight: '600',
-                                  textAlign: 'center',
-                                  marginBottom: '10px'
-                                }}>
-                                  ✓ Wallet Connected Successfully
-                                </div>
-                                <div style={{ 
-                                  color: '#aaa', 
-                                  fontSize: '0.9rem', 
-                                  textAlign: 'center',
-                                  lineHeight: '1.4'
-                                }}>
-                                  Redirecting to homepage...
-                                </div>
-                              </div>
-                            ) : (
-                            <form onSubmit={handleMassaInputSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', paddingLeft: '20px', paddingRight: '20px' }}>
-                              <PasswordInput
-                                placeholder="Private Key (S1...)"
-                                value={inputPrivateKey}
-                                onChange={e => setInputPrivateKey(e.target.value)}
-                                style={{ marginBottom: 16, width: '100%', fontSize: '0.85rem' }}
-                              />
-                              {inputError && <div style={{ color: '#FFD700', marginBottom: 10, width: '100%' }}>{inputError}</div>}
-                              <FormLoginButton 
-                                type="submit" 
-                                style={{ marginTop: 8, width: '100%' }}
-                                disabled={isConnecting}
-                              >
-                                {isConnecting ? 'Connecting...' : 'Connect'}
-                              </FormLoginButton>
-                            </form>
-                            )}
-                          </AccordionInputContainer>
-                        )}
-                      </WalletOption>
-                        <WalletOption expanded={showLedgerInput} onClick={handleConnectLedgerWallet} style={{ flexDirection: 'column', alignItems: 'stretch', paddingBottom: showLedgerInput ? 0 : undefined }}>
-                          <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        <WalletIcon>
-                          <svg width="28" height="28" viewBox="0 0 48 48"><rect x="8" y="8" width="35" height="35" rx="8" fill="#FFD700" /></svg>
-                        </WalletIcon>
-                        <WalletInfo>
-                          <WalletName>Ledger</WalletName>
-                          <WalletDesc>Hardware wallet</WalletDesc>
-                        </WalletInfo>
-                        <WalletArrow>
-                          <img 
-                            src={ExpandArrow} 
-                            alt="expand" 
-                            style={{ 
-                              width: '16px', 
-                              height: '16px',
-                                  transform: showLedgerInput ? 'rotate(180deg)' : 'rotate(90deg)',
-                              transition: 'transform 0.2s ease',
-                              filter: 'invert(85%) sepia(100%) saturate(1000%) hue-rotate(180deg)'
-                            }} 
-                          />
-                        </WalletArrow>
-                          </div>
-                          {showLedgerInput && (
-                            <AccordionInputContainer onClick={e => e.stopPropagation()}>
-                              <div style={{ 
-                                width: '100%', 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                alignItems: 'center', 
-                                paddingLeft: '20px', 
-                                paddingRight: '20px',
-                                paddingBottom: '20px'
-                              }}>
-                                <div style={{ 
-                                  color: '#FFD700', 
-                                  fontSize: '1.1rem', 
-                                  fontWeight: '600',
-                                  textAlign: 'center',
-                                  marginBottom: '10px'
-                                }}>
-                                  COMING SOON
-                                </div>
-                                <div style={{ 
-                                  color: '#aaa', 
-                                  fontSize: '0.9rem', 
-                                  textAlign: 'center',
-                                  lineHeight: '1.4'
-                                }}>
-                                  Ledger hardware wallet integration will be available in a future update.
-                                </div>
-                              </div>
-                            </AccordionInputContainer>
-                          )}
-                      </WalletOption>
-                    </WalletsList>
-                  </SlidingTabContent>
-                    <SlidingTabContent>
-                      <LoginTabContent>
-                        <LoginButton variant="google" style={{ margin: '12px 0', opacity: 1, animation: 'none', width: '100%' }}>
-                          <LoginIcon variant="google">
-                            <svg width="22" height="22" viewBox="0 0 48 48">
-                              <g>
-                                <path className="google-g" d="M43.611 20.083H42V20H24v8h11.303C33.978 32.833 29.418 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c2.438 0 4.7.751 6.573 2.037l6.418-6.418C33.684 5.084 29.084 3 24 3 12.954 3 4 11.954 4 23s8.954 20 20 20c11.046 0 20-8.954 20-20 0-1.341-.138-2.651-.389-3.917z"/>
-                              </g>
-                            </svg>
-                          </LoginIcon>
-                          Login with Google
-                        </LoginButton>
-                        <OrDivider>or</OrDivider>
-                        <form style={{ width: '100%', maxWidth: '100%', marginTop: 10, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <EmailInput
-                            type="email"
-                            placeholder="Email address"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                          />
-                          <PasswordInput
-                            placeholder="Password"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                          />
-                          <ForgotLink href="#">Forgot password?</ForgotLink>
-                          <FormLoginButton type="submit">Login</FormLoginButton>
-                        </form>
-                        <ComingSoonOverlay>
-                          <div style={{ 
-                            color: '#FFD700', 
-                            fontSize: '1.3rem', 
-                            fontWeight: '700',
-                            textAlign: 'center',
-                            marginBottom: '8px',
-                            textTransform: 'uppercase',
-                            letterSpacing: '1px'
-                          }}>
-                            Coming Soon
-                          </div>
-                          <div style={{ 
-                            color: '#aaa', 
-                            fontSize: '0.95rem', 
-                            textAlign: 'center',
-                            lineHeight: '1.4',
-                            maxWidth: '280px'
-                          }}>
-                            Social and Email login will be available in a future update.
-                          </div>
-                        </ComingSoonOverlay>
-                      </LoginTabContent>
-                    </SlidingTabContent>
-                </SlidingTabsInner>
-              </SlidingTabsContainer>
+                            <div style={{ 
+                              color: '#aaa', 
+                              fontSize: '0.95rem', 
+                              textAlign: 'center',
+                              lineHeight: '1.4',
+                              maxWidth: '280px'
+                            }}>
+                              Social and Email login will be available in a future update.
+                            </div>
+                          </ComingSoonOverlay>
+                        </LoginTabContent>
+                      </SlidingTabContent>
+                  </SlidingTabsInner>
+                </SlidingTabsContainer>
+              </TabContentScrollContainer>
             </ModalPanel>
           </ModalBackdrop>
         )}
