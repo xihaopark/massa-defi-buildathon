@@ -11,9 +11,8 @@ async function checkBalance() {
     console.log(`👛 Wallet Address: ${account.address}`);
     console.log(`🌐 Network: Massa Buildnet (Testnet)`);
     
-    // Try to get account info using the correct API
-    const accountInfo = await provider.accounts([account.address]);
-    const balance = accountInfo[0]?.candidate_balance || '0';
+    // Try to get balance using the correct API
+    const balance = await provider.balance(account.address, true);
     const balanceInMas = Number(balance) / 1e9; // Convert from nanoMAS to MAS
     
     console.log(`💵 Current Balance: ${balanceInMas.toFixed(4)} MAS`);

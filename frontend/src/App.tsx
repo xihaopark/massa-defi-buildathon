@@ -860,11 +860,419 @@ const SubSectionCard = styled.div<{ delay?: number }>`
   }
 `;
 
+// Virtual Market Monitor Component
+const MonitorContainer = styled.div`
+  min-height: 100vh;
+  background: #0A1226;
+  color: #fff;
+  padding: 20px;
+  animation: ${homepageFadeIn} 0.6s cubic-bezier(0.4,0,0.2,1) both;
+`;
+
+const MonitorHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #141B35;
+  border-radius: 12px;
+  border: 1px solid #232b4a;
+`;
+
+const BackButton = styled.button`
+  background: transparent;
+  border: 1px solid #00F5FF;
+  color: #00F5FF;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #00F5FF;
+    color: #0A1226;
+  }
+`;
+
+const MarketDataGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+`;
+
+const DataCard = styled.div`
+  background: #141B35;
+  border: 1px solid #232b4a;
+  border-radius: 12px;
+  padding: 20px;
+  
+  h3 {
+    color: #00F5FF;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+  }
+`;
+
+const LiveChart = styled.div`
+  background: #0A1226;
+  border: 1px solid #232b4a;
+  border-radius: 8px;
+  height: 200px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 15px;
+  padding: 10px;
+`;
+
+const StatusIndicator = styled.div<{ status: 'active' | 'inactive' }>`
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: ${({ status }) => status === 'active' ? '#10B981' : '#EF4444'};
+  margin-right: 8px;
+`;
+
+// Chart components
+const ChartSvg = styled.svg`
+  width: 100%;
+  height: 100%;
+`;
+
+const ChartLine = styled.path<{ color: string }>`
+  fill: none;
+  stroke: ${({ color }) => color};
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+`;
+
+const ChartGrid = styled.line`
+  stroke: #232b4a;
+  stroke-width: 1;
+  stroke-dasharray: 2,2;
+`;
+
+const ChartLegend = styled.div`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(10, 18, 38, 0.8);
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+`;
+
+const LegendItem = styled.div<{ color: string }>`
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+  
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 2px;
+    background: ${({ color }) => color};
+    margin-right: 6px;
+  }
+`;
+
+// Simple line chart component
+interface PriceChartProps {
+  data: number[][];
+  colors: string[];
+  labels: string[];
+}
+
+function PriceChart({ data, colors, labels }: PriceChartProps) {
+  const width = 600;
+  const height = 180;
+  const padding = { top: 10, right: 10, bottom: 20, left: 10 };
+  
+  // Calculate bounds
+  const allValues = data.flat();
+  const minValue = Math.min(...allValues) * 0.98;
+  const maxValue = Math.max(...allValues) * 1.02;
+  const range = maxValue - minValue;
+  
+  // Generate path for each line
+  const generatePath = (values: number[]) => {
+    const points = values.map((value, index) => {
+      const x = (index / (values.length - 1)) * (width - padding.left - padding.right) + padding.left;
+      const y = height - padding.bottom - ((value - minValue) / range) * (height - padding.top - padding.bottom);
+      return `${x},${y}`;
+    });
+    return `M ${points.join(' L ')}`;
+  };
+  
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <ChartSvg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+        {/* Grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
+          <ChartGrid
+            key={ratio}
+            x1={padding.left}
+            y1={padding.top + ratio * (height - padding.top - padding.bottom)}
+            x2={width - padding.right}
+            y2={padding.top + ratio * (height - padding.top - padding.bottom)}
+          />
+        ))}
+        
+        {/* Price lines */}
+        {data.map((line, index) => (
+          <ChartLine
+            key={index}
+            d={generatePath(line)}
+            color={colors[index]}
+          />
+        ))}
+      </ChartSvg>
+      
+      <ChartLegend>
+        {labels.map((label, index) => (
+          <LegendItem key={index} color={colors[index]}>
+            {label}
+          </LegendItem>
+        ))}
+      </ChartLegend>
+    </div>
+  );
+}
+
+interface VirtualMarketMonitorProps {
+  portfolioId: number;
+  strategyName: string;
+  onBack: () => void;
+}
+
+function VirtualMarketMonitor({ portfolioId, strategyName, onBack }: VirtualMarketMonitorProps) {
+  const [marketData, setMarketData] = useState<any>(null);
+  const [ascStatus, setAscStatus] = useState<'active' | 'inactive'>('active');
+  const [isLoading, setIsLoading] = useState(false);
+  const [priceHistory, setPriceHistory] = useState<number[][]>([
+    [], // ASC strategy line (real)
+    [], // Market line 1 (display only)
+    [], // Market line 2 (display only)
+    []  // Market line 3 (display only)
+  ]);
+  
+  // Initialize price history with random data
+  useEffect(() => {
+    const basePrice = 1000;
+    const initData = Array(4).fill(null).map((_, lineIndex) => {
+      return Array(50).fill(null).map((_, i) => {
+        const trend = lineIndex === 0 ? 1.0002 : (0.9998 + Math.random() * 0.0006);
+        const volatility = lineIndex === 0 ? 0.002 : 0.003 + lineIndex * 0.001;
+        return basePrice * Math.pow(trend, i) + (Math.random() - 0.5) * basePrice * volatility;
+      });
+    });
+    setPriceHistory(initData);
+  }, []);
+  
+  // Update prices every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPriceHistory(prev => {
+        return prev.map((line, lineIndex) => {
+          const newLine = [...line.slice(-49)]; // Keep last 49 points
+          const lastPrice = newLine[newLine.length - 1] || 1000;
+          const trend = lineIndex === 0 ? 1.0001 : (0.9999 + Math.random() * 0.0004);
+          const volatility = lineIndex === 0 ? 0.002 : 0.003 + lineIndex * 0.001;
+          const newPrice = lastPrice * trend + (Math.random() - 0.5) * lastPrice * volatility;
+          newLine.push(newPrice);
+          return newLine;
+        });
+      });
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Fetch market data every 2 seconds
+  useEffect(() => {
+    const fetchMarketData = async () => {
+      setIsLoading(true);
+      try {
+        // Import contract interaction utilities
+        const { ContractInteraction } = await import('./utils/contractInteraction');
+        const contractInteraction = new ContractInteraction();
+        
+        // Get virtual market data
+        const marketResult = await contractInteraction.getVirtualMarketStatus();
+        if (marketResult.success && marketResult.data) {
+          setMarketData(marketResult.data);
+        }
+        
+        // Interact with virtual market
+        const interactionResult = await contractInteraction.interactWithVirtualMarket();
+        console.log('Market interaction:', interactionResult);
+        
+      } catch (error) {
+        console.error('Error fetching market data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchMarketData();
+    const interval = setInterval(fetchMarketData, 2000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  return (
+    <MonitorContainer>
+      <MonitorHeader>
+        <div>
+          <h1 style={{ margin: 0, marginBottom: 8 }}>Portfolio {portfolioId} Monitor</h1>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <StatusIndicator status={ascStatus} />
+            <span>{strategyName} Strategy - {ascStatus === 'active' ? 'Active' : 'Inactive'}</span>
+          </div>
+        </div>
+        <BackButton onClick={onBack}>← Back to Dashboard</BackButton>
+      </MonitorHeader>
+      
+      <MarketDataGrid>
+        <DataCard>
+          <h3>Virtual Market Status</h3>
+          <LiveChart>
+            <PriceChart
+              data={priceHistory}
+              colors={['#00F5FF', '#FFD700', '#FF69B4', '#10B981']}
+              labels={[
+                `ASC ${strategyName} (Real)`,
+                'Market BTC/MAS',
+                'Market ETH/MAS',
+                'Market SOL/MAS'
+              ]}
+            />
+          </LiveChart>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ color: '#aaa', fontSize: '0.9rem' }}>Current Price</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+                {priceHistory[0].length > 0 ? priceHistory[0][priceHistory[0].length - 1].toFixed(2) : '1000.00'} MAS
+              </div>
+            </div>
+            <div>
+              <div style={{ color: '#aaa', fontSize: '0.9rem' }}>24h Change</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: priceHistory[0].length > 1 && priceHistory[0][priceHistory[0].length - 1] > priceHistory[0][0] ? '#10B981' : '#EF4444' }}>
+                {priceHistory[0].length > 1 ? 
+                  `${((priceHistory[0][priceHistory[0].length - 1] - priceHistory[0][0]) / priceHistory[0][0] * 100).toFixed(2)}%` 
+                  : '+2.45%'}
+              </div>
+            </div>
+          </div>
+        </DataCard>
+        
+        <DataCard>
+          <h3>ASC Strategy Performance</h3>
+          <div style={{ marginBottom: 15 }}>
+            <div style={{ color: '#aaa', marginBottom: 5 }}>Total Trades</div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+              {marketData?.totalTrades || '147'}
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15 }}>
+            <div>
+              <div style={{ color: '#aaa', fontSize: '0.9rem' }}>Win Rate</div>
+              <div style={{ color: '#10B981', fontWeight: 'bold' }}>
+                {marketData?.winRate || '68.5'}%
+              </div>
+            </div>
+            <div>
+              <div style={{ color: '#aaa', fontSize: '0.9rem' }}>Profit Factor</div>
+              <div style={{ color: '#00F5FF', fontWeight: 'bold' }}>
+                {marketData?.profitFactor || '1.85'}
+              </div>
+            </div>
+          </div>
+        </DataCard>
+        
+        <DataCard>
+          <h3>Real-time ASC Interaction</h3>
+          <div style={{ marginBottom: 15 }}>
+            <div style={{ color: '#aaa', marginBottom: 5 }}>Last Execution</div>
+            <div style={{ fontSize: '0.9rem' }}>
+              {new Date().toLocaleTimeString()}
+            </div>
+          </div>
+          <div style={{ marginBottom: 15 }}>
+            <div style={{ color: '#aaa', marginBottom: 5 }}>Strategy State</div>
+            <div style={{ color: '#FFD700', fontWeight: 'bold' }}>
+              {marketData?.strategyState || 'ANALYZING'}
+            </div>
+          </div>
+          <div>
+            <div style={{ color: '#aaa', marginBottom: 5 }}>Gas Used (24h)</div>
+            <div>{marketData?.gasUsed || '0.0245'} MAS</div>
+          </div>
+        </DataCard>
+      </MarketDataGrid>
+      
+      <DataCard>
+        <h3>Live Trading Activity</h3>
+        <div style={{ maxHeight: 300, overflow: 'auto' }}>
+          {[...Array(10)].map((_, i) => {
+            const isBuy = strategyName === 'Multi-thread Attention' ? 
+              i % 3 !== 0 : // Multi-thread strategy buys more often
+              i % 2 === 0;  // Mean Reversion alternates more evenly
+            const price = priceHistory[0].length > i ? 
+              priceHistory[0][priceHistory[0].length - 1 - i] : 
+              1000 + Math.random() * 50;
+            const amount = strategyName === 'Multi-thread Attention' ?
+              (Math.random() * 15 + 10).toFixed(2) : // Larger trades
+              (Math.random() * 8 + 3).toFixed(2);   // Smaller, more frequent
+            
+            return (
+              <div key={i} style={{ 
+                padding: '10px', 
+                borderBottom: '1px solid #232b4a',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', color: isBuy ? '#10B981' : '#EF4444' }}>
+                    {isBuy ? 'BUY' : 'SELL'} Signal - {strategyName}
+                  </div>
+                  <div style={{ color: '#aaa', fontSize: '0.85rem' }}>
+                    {new Date(Date.now() - i * 30000).toLocaleTimeString()}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ color: isBuy ? '#10B981' : '#EF4444', fontWeight: 'bold' }}>
+                    {amount} MAS
+                  </div>
+                  <div style={{ color: '#aaa', fontSize: '0.85rem' }}>
+                    @ {price.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </DataCard>
+    </MonitorContainer>
+  );
+}
+
 function App() {
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'wallet'>('wallet');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [currentPage, setCurrentPage] = useState<'main' | 'portfolio1' | 'portfolio2'>('main');
   
   const [walletState, setWalletState] = useState<WalletState>({
     provider: null,
@@ -1335,10 +1743,12 @@ function App() {
         </DisconnectMessage>
       )}
       {showHomepage ? (
-        <HomepageContainer>
-          <Header>
-            <HeaderLogo src={OdinLogoH} alt="Odin Logo" />
-            <HeaderWalletInfo style={{ position: 'relative' }}>
+        <>
+          {currentPage === 'main' ? (
+            <HomepageContainer>
+              <Header>
+                <HeaderLogo src={OdinLogoH} alt="Odin Logo" />
+                <HeaderWalletInfo style={{ position: 'relative' }}>
               <WalletBalance
                 ref={walletBalanceRef}
                 onClick={() => setShowWalletSummary(v => !v)}
@@ -1470,7 +1880,7 @@ function App() {
                 })()}
                 {/* Action Buttons */}
                 {/* Portfolio 1 Card */}
-                <SubSectionCard delay={0.1}>
+                <SubSectionCard delay={0.1} onClick={() => setCurrentPage('portfolio1')}>
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: 18 }}>
                     <div style={{ fontWeight: 700, fontSize: '1.15rem', color: '#00F5FF', marginRight: 12 }}>Portfolio 1</div>
                     <span style={{ background: '#FFD700', color: '#0A1226', fontWeight: 700, fontSize: '0.92rem', borderRadius: 16, padding: '4px 14px', marginLeft: 0, display: 'inline-block', letterSpacing: '0.01em' }}>Multi-thread Attention</span>
@@ -1502,10 +1912,10 @@ function App() {
                   </div>
                 </SubSectionCard>
                 {/* Portfolio 2 Card */}
-                <SubSectionCard delay={0.15}>
+                <SubSectionCard delay={0.15} onClick={() => setCurrentPage('portfolio2')}>
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: 18 }}>
                     <div style={{ fontWeight: 700, fontSize: '1.15rem', color: '#00F5FF', marginRight: 12 }}>Portfolio 2</div>
-                    <span style={{ background: '#FFD700', color: '#0A1226', fontWeight: 700, fontSize: '0.92rem', borderRadius: 16, padding: '4px 14px', marginLeft: 0, display: 'inline-block', letterSpacing: '0.01em' }}>Multi-thread Attention</span>
+                    <span style={{ background: '#FF69B4', color: '#0A1226', fontWeight: 700, fontSize: '0.92rem', borderRadius: 16, padding: '4px 14px', marginLeft: 0, display: 'inline-block', letterSpacing: '0.01em' }}>Mean Reversion</span>
                   </div>
                   <div style={{ display: 'flex', gap: 32, marginBottom: 18 }}>
                     <div style={{ flex: 1 }}>
@@ -1571,29 +1981,48 @@ function App() {
                   <div style={{ color: '#10B981', fontWeight: 600, fontSize: '0.98rem', marginBottom: 8 }}>Active Strategies</div>
                   <SubSectionCard delay={0.2} style={{ background: '#20294a' }}>
                     <div style={{ color: '#FFD700', fontWeight: 600, fontSize: '0.97rem', marginBottom: 4 }}>
-                      Multi-threaded Attention
+                      Multi-thread Attention
                     </div>
                     <div style={{ color: '#aaa', fontSize: '0.88rem' }}>
                       Portfolios: <span style={{ color: '#00F5FF', fontWeight: 600 }}>Portfolio 1</span>
+                    </div>
+                  </SubSectionCard>
+                  <SubSectionCard delay={0.25} style={{ background: '#20294a' }}>
+                    <div style={{ color: '#FF69B4', fontWeight: 600, fontSize: '0.97rem', marginBottom: 4 }}>
+                      Mean Reversion
+                    </div>
+                    <div style={{ color: '#aaa', fontSize: '0.88rem' }}>
+                      Portfolios: <span style={{ color: '#00F5FF', fontWeight: 600 }}>Portfolio 2</span>
                     </div>
                   </SubSectionCard>
                 </div>
                 {/* Inactive Strategies */}
                 <div>
                   <div style={{ color: '#aaa', fontWeight: 600, fontSize: '0.98rem', marginBottom: 8 }}>Inactive Strategies</div>
-                  <SubSectionCard delay={0.25}>
-                    <div style={{ color: '#aaa', fontWeight: 500, fontSize: '0.97rem', marginBottom: 4 }}>
-                      Mean Reversion
-                    </div>
-                    <div style={{ color: '#aaa', fontSize: '0.88rem' }}>
-                      Portfolios: <span style={{ color: '#aaa', fontWeight: 600 }}>None</span>
+                  <SubSectionCard delay={0.3}>
+                    <div style={{ color: '#666', fontWeight: 500, fontSize: '0.97rem', textAlign: 'center' }}>
+                      No inactive strategies
                     </div>
                   </SubSectionCard>
                 </div>
               </SectionCard>
             </div>
           </MainContent>
-        </HomepageContainer>
+            </HomepageContainer>
+          ) : currentPage === 'portfolio1' ? (
+            <VirtualMarketMonitor 
+              portfolioId={1}
+              strategyName="Multi-thread Attention"
+              onBack={() => setCurrentPage('main')}
+            />
+          ) : currentPage === 'portfolio2' ? (
+            <VirtualMarketMonitor 
+              portfolioId={2}
+              strategyName="Mean Reversion"
+              onBack={() => setCurrentPage('main')}
+            />
+          ) : null}
+        </>
       ) : (
       <PageContainer>
         <LogoImg src={OdinLogoV} alt="Odin Logo Vertical" />

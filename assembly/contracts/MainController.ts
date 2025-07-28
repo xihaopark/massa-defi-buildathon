@@ -7,6 +7,8 @@ import {
   Address
 } from '@massalabs/massa-as-sdk';
 import { Args, stringToBytes, bytesToString } from '@massalabs/as-types';
+import { StrategyManager, StrategyType } from './core/StrategyManager';
+import { VirtualMarketGenerator, MarketStatus } from './market/VirtualMarketGenerator';
 
 // Storage keys
 const THREAD_ADDRESSES_KEY = 'thread_addresses';
@@ -174,4 +176,153 @@ export function forceUpdate(_: StaticArray<u8>): void {
 export function getThreadAddresses(_: StaticArray<u8>): StaticArray<u8> {
   const addresses = Storage.has(THREAD_ADDRESSES_KEY) ? Storage.get(THREAD_ADDRESSES_KEY) : '';
   return stringToBytes(addresses);
+}
+
+/**
+ * Switch active strategy
+ */
+export function switchStrategy(binaryArgs: StaticArray<u8>): void {
+  const args = new Args(binaryArgs);
+  const strategyType = args.nextU8().expect('Strategy type is required');
+  
+  StrategyManager.setActiveStrategy(strategyType as StrategyType);
+  generateEvent(`Strategy switched to: ${StrategyManager.getStrategyName(strategyType as StrategyType)}`);
+}
+
+/**
+ * Get active strategy
+ */
+export function getActiveStrategy(_: StaticArray<u8>): StaticArray<u8> {
+  const activeStrategy = StrategyManager.getActiveStrategy();
+  const strategyName = StrategyManager.getStrategyName(activeStrategy);
+  
+  const args = new Args();
+  args.add(activeStrategy as u8);
+  args.add(strategyName);
+  
+  return args.serialize();
+}
+
+/**
+ * Get available strategies
+ */
+export function getAvailableStrategies(_: StaticArray<u8>): StaticArray<u8> {
+  const strategies = StrategyManager.getAvailableStrategies();
+  const args = new Args();
+  
+  args.add(strategies.length as u8);
+  for (let i = 0; i < strategies.length; i++) {
+    args.add(strategies[i]);
+  }
+  
+  return args.serialize();
+}
+
+/**
+ * Execute strategy with mock data for testing
+ */
+export function executeStrategy(_: StaticArray<u8>): StaticArray<u8> {
+  // Generate mock price data
+  const prices: i32[] = [];
+  const volumes: i32[] = [];
+  
+  // Generate 25 data points for testing
+  for (let i = 0; i < 25; i++) {
+    const basePrice = 1000;
+    const variation = Math.sin(i as f64 * 0.3) * 50;
+    prices.push((basePrice + variation) as i32);
+    volumes.push((100 + Math.random() * 50) as i32);
+  }
+  
+  const result = StrategyManager.executeActiveStrategy(prices, volumes);
+  StrategyManager.saveStrategyResult(result);
+  
+  const args = new Args();
+  args.add(result.state as u8);
+  args.add(result.confidence);
+  args.add(result.signal);
+  
+  generateEvent(`Strategy executed: ${result.signal} (confidence: ${result.confidence})`);
+  
+  return args.serialize();
+}
+
+/**
+ * Generate virtual market data
+ */
+export function generateMarketData(_: StaticArray<u8>): StaticArray<u8> {
+  const dataPoint = VirtualMarketGenerator.generateMarketData();
+  
+  const args = new Args();
+  args.add(dataPoint.price);
+  args.add(dataPoint.volume);
+  args.add(dataPoint.timestamp);
+  
+  return args.serialize();
+}
+
+/**
+ * Get virtual market status
+ */
+export function getVirtualMarketStatus(_: StaticArray<u8>): StaticArray<u8> {
+  const status = VirtualMarketGenerator.getMarketStatus();
+  
+  const args = new Args();
+  args.add(status.currentPrice);
+  args.add(status.priceChange);
+  args.add(status.volume);
+  args.add(status.volatility);
+  args.add(status.trend);
+  args.add(status.lastUpdate);
+  
+  return args.serialize();
+}
+
+/**
+ * Get price history for charts
+ */
+export function getPriceHistory(_: StaticArray<u8>): StaticArray<u8> {
+  const prices = VirtualMarketGenerator.getPriceHistory();
+  
+  const args = new Args();
+  args.add(prices.length as u8);
+  for (let i = 0; i < prices.length; i++) {
+    args.add(prices[i]);
+  }
+  
+  return args.serialize();
+}
+
+/**
+ * Interact with ASC using virtual market data
+ */
+export function interactWithVirtualMarket(_: StaticArray<u8>): StaticArray<u8> {
+  const result = VirtualMarketGenerator.interactWithASC();
+  return stringToBytes(result);
+}
+
+/**
+ * Get ASC interaction history
+ */
+export function getInteractionHistory(_: StaticArray<u8>): StaticArray<u8> {
+  const history = VirtualMarketGenerator.getInteractionHistory();
+  
+  const args = new Args();
+  args.add(history.length as u8);
+  for (let i = 0; i < history.length; i++) {
+    args.add(history[i]);
+  }
+  
+  return args.serialize();
+}
+
+/**
+ * Simulate market shock for testing
+ */
+export function simulateMarketShock(binaryArgs: StaticArray<u8>): void {
+  const args = new Args(binaryArgs);
+  const intensity = args.nextF64().expect('Shock intensity is required');
+  
+  VirtualMarketGenerator.simulateMarketShock(intensity);
+  generateEvent(`Market shock simulated with intensity: ${intensity}`);
 }
